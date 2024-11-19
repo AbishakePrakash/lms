@@ -12,11 +12,12 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Users } from './entities/user.entity';
 import * as bcrypt from 'bcrypt';
 import { Repository } from 'typeorm';
-import { MailData, ReturnData } from 'src/Utils/globalValues';
+// import { MailData, ReturnData } from 'src/Utils/globalValues';
 import { OtpService } from 'src/otp/otp.service';
 import triggerMaileEvent from 'src/Utils/nodeMailer';
 import { OtpDto } from 'src/otp/dto/create-otp.dto';
 import { VerifyAccountPayload } from 'src/otp/dto/verifyAccount.dto';
+import { MailData, ReturnData } from 'src/utils/globalValues';
 
 // ... your TypeScript code using bcryptjs
 @Injectable()

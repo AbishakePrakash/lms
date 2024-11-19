@@ -10,7 +10,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Answer } from './entities/answer.entity';
 import { Repository } from 'typeorm';
 import { CommentsService } from 'src/comments/comments.service';
-import { PostData } from 'src/Utils/globalValues';
 import { FindByParentDto } from 'src/comments/dto/findByParent.dto';
 import { Question } from 'src/question/entities/question.entity';
 

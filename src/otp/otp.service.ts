@@ -6,7 +6,6 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { OtpDto } from './dto/create-otp.dto';
-import { ReturnData } from 'src/Utils/globalValues';
 import { VerifyAccountPayload } from './dto/verifyAccount.dto';
 import { Otp } from './entities/otp.entity';
 import { VerifyOtpPayload } from './dto/verify-otp.dto';
