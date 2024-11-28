@@ -6,16 +6,22 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
 import { QuestionService } from './question.service';
 import { CreateQuestionDto } from './dto/create-question.dto';
 import { UpdateQuestionDto } from './dto/update-question.dto';
+import { ApiBearerAuth } from '@nestjs/swagger';
+import { AuthGuard } from 'src/auth/guard/authguard';
 
+@ApiBearerAuth('access-token')
 @Controller('question')
+@UseGuards(AuthGuard)
 export class QuestionController {
   constructor(private readonly questionService: QuestionService) {}
 
   @Post()
+  @UseGuards(AuthGuard)
   create(@Body() createQuestionDto: CreateQuestionDto) {
     return this.questionService.create(createQuestionDto);
   }

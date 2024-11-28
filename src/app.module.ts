@@ -6,17 +6,29 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Users } from './users/entities/user.entity';
 import { OtpModule } from './otp/otp.module';
 import * as dotenv from 'dotenv';
-import { Otp } from './otp/entities/otp.entity';
 import { QuestionModule } from './question/question.module';
 import { SqlModule } from './utils/sql.module';
 import { AnswersModule } from './answers/answers.module';
 import { CommentsModule } from './comments/comments.module';
+import { AuthModule } from './auth/auth.module';
+import { UserContextService } from './context/userContext';
+import { CourseModule } from './course/course.module';
 
 dotenv.config();
 
 @Module({
-  imports: [UsersModule, SqlModule, OtpModule, QuestionModule, AnswersModule, CommentsModule],
+  imports: [
+    UsersModule,
+    SqlModule,
+    OtpModule,
+    QuestionModule,
+    AnswersModule,
+    CommentsModule,
+    AuthModule,
+    CourseModule,
+  ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, UserContextService],
+  exports: [AppModule],
 })
 export class AppModule {}

@@ -13,10 +13,13 @@ import { UpdateUserDto } from 'src/users/dto/update-user.dto';
 import { CommentsService } from 'src/comments/comments.service';
 import { FindByParentDto } from 'src/comments/dto/findByParent.dto';
 import { AnswersService } from 'src/answers/answers.service';
+import { UserContextService } from 'src/context/userContext';
+import { Users } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class QuestionService {
   constructor(
+    private readonly userContextService: UserContextService,
     @InjectRepository(Question)
     private readonly questionRepository: Repository<Question>,
     @Inject(CommentsService)
@@ -25,8 +28,20 @@ export class QuestionService {
     private readonly answersService: AnswersService,
   ) {}
   async create(createQuestionDto: CreateQuestionDto) {
+    const user: Users = this.userContextService.getUser();
+    console.log({ user });
+
+    // createQuestionDto.email = user.email;
+    // createQuestionDto.userId = user.id;
+
+    const payLoad = {
+      ...createQuestionDto,
+      email: user.email,
+      userId: user.id,
+    };
+
     try {
-      const question = await this.questionRepository.save(createQuestionDto);
+      const question = await this.questionRepository.save(payLoad);
       if (!question) {
         throw new MisdirectedException('Question posting failed');
       }

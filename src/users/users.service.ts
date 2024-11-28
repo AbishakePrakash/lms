@@ -18,11 +18,13 @@ import { OtpDto } from 'src/otp/dto/create-otp.dto';
 import { VerifyAccountPayload } from 'src/otp/dto/verifyAccount.dto';
 import { MailData, ReturnData } from 'src/utils/globalValues';
 import triggerMaileEvent from 'src/utils/nodeMailer';
+import { UserContextService } from 'src/context/userContext';
 
 // ... your TypeScript code using bcryptjs
 @Injectable()
 export class UsersService {
   constructor(
+    private readonly userContextService: UserContextService,
     @InjectRepository(Users)
     private readonly usersRepo: Repository<Users>,
     @Inject(OtpService)
@@ -59,7 +61,7 @@ export class UsersService {
     const mailData = new MailData();
     const sender = process.env.MAIL_SENDER;
     const saltRounds = process.env.SALT_ROUNDS;
-    console.log({ saltRounds });
+    // console.log({ saltRounds });
     const otp = this.generateSixDigitNumber();
 
     createUserDto.isActive = false;
@@ -165,7 +167,15 @@ export class UsersService {
   }
 
   async findOneByEmail(email: string) {
-    const user = await this.usersRepo.findOneBy({ email: email });
+    const user = await this.usersRepo.findOneBy({ email });
+    // console.log(user);
+    // console.log(typeof user);
+
+    return user;
+  }
+
+  async getProfile() {
+    const user = await this.userContextService.getUser();
     return user;
   }
 

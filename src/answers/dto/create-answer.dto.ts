@@ -1,17 +1,17 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateAnswerDto {
-  @ApiProperty({
-    description: 'ID of the user creating the answer',
-    example: 1,
-  })
-  userId: number;
+  // @ApiProperty({
+  //   description: 'ID of the user creating the answer',
+  //   example: 1,
+  // })
+  // userId: number;
 
-  @ApiProperty({
-    description: 'Email of the user creating the answer',
-    example: 'userAnswer@example.com',
-  })
-  email: string;
+  // @ApiProperty({
+  //   description: 'Email of the user creating the answer',
+  //   example: 'userAnswer@example.com',
+  // })
+  // email: string;
 
   @ApiProperty({
     description: 'ID of the question being answered',

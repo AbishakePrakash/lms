@@ -1,17 +1,17 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateCommentDto {
-  @ApiProperty({
-    description: 'ID of the user creating the comment',
-    example: 6,
-  })
-  userId: number;
+  // @ApiProperty({
+  //   description: 'ID of the user creating the comment',
+  //   example: 6,
+  // })
+  // userId: number;
 
-  @ApiProperty({
-    description: 'Email of the user creating the comment',
-    example: 'user@example.com',
-  })
-  email: string;
+  // @ApiProperty({
+  //   description: 'Email of the user creating the comment',
+  //   example: 'user@example.com',
+  // })
+  // email: string;
 
   @ApiProperty({
     description:

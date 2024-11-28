@@ -39,7 +39,7 @@ export class OtpService {
   }
 
   async verifyAccount(payload: VerifyAccountPayload) {
-    console.log({ payload });
+    // console.log({ payload });
 
     const data = await this.otpRepository.findOne({
       where: { email: payload.email, service: 'VerifyAccount' },
@@ -60,8 +60,18 @@ export class OtpService {
     return data.otp === payload.otp;
   }
 
+  async getOtp(email: string) {
+    const otpData = await this.otpRepository.findOne({
+      where: { email },
+      order: { createdAt: 'DESC' },
+    });
+    // console.log({ otpData });
+
+    return otpData;
+  }
+
   async resetPassword(payload: VerifyOtpPayload) {
-    console.log({ payload });
+    // console.log({ payload });
 
     const data = await this.otpRepository.findOne({
       where: { email: payload.email, service: 'PasswordReset' },
@@ -77,7 +87,7 @@ export class OtpService {
     // if (currentTime > expiryTime) {
     //   throw new RequestTimeoutException('Otp Expired');
     // }
-    console.log(data.otp, payload.otp);
+    // console.log(data.otp, payload.otp);
 
     return data.otp === payload.otp;
   }

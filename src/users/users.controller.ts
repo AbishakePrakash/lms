@@ -13,8 +13,11 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
 import { VerifyAccountPayload } from 'src/otp/dto/verifyAccount.dto';
-import { AuthGuard } from 'src/guard/authguard';
+import { ApiBearerAuth } from '@nestjs/swagger';
+import { AdminGuard } from 'src/auth/guard/adminGuard';
+import { AuthGuard } from 'src/auth/guard/authguard';
 
+@ApiBearerAuth('access-token') // Links to the defined security scheme
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
@@ -30,26 +33,30 @@ export class UsersController {
   }
 
   @Get()
-  // @UseGuards(AdminAccess)
-  // @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard)
   findAll() {
     return this.usersService.findAll();
   }
+  @Get('profile')
+  @UseGuards(AdminGuard)
+  getProfile() {
+    return this.usersService.getProfile();
+  }
 
   @Get(':id')
-  // @UseGuards(AuthGuard)
+  @UseGuards(AdminGuard)
   findOne(@Param('id') id: string) {
     return this.usersService.findOne(+id);
   }
 
   @Patch(':id')
-  // @UseGuards(AuthGuard)
+  @UseGuards(AdminGuard)
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.usersService.update(+id, updateUserDto);
   }
 
   @Delete(':id')
-  // @UseGuards(AuthGuard)
+  @UseGuards(AdminGuard)
   remove(@Param('id') id: string) {
     return this.usersService.remove(+id);
   }

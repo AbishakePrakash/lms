@@ -10,8 +10,8 @@ export class VerifyAccountPayload {
   otp: number;
 
   @ApiProperty({
-    description:
-      'The service for which the OTP is being verified (e.g., VerifyAccount)',
+    description: 'The service for which the OTP is being verified',
+    example: 'VerifyAccount',
   })
   service: string;
 }

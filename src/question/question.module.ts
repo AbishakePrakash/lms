@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Question } from './entities/question.entity';
 import { CommentsModule } from 'src/comments/comments.module';
 import { AnswersModule } from 'src/answers/answers.module';
+import { UserContextService } from 'src/context/userContext';
 
 @Module({
   imports: [
@@ -13,6 +14,6 @@ import { AnswersModule } from 'src/answers/answers.module';
     AnswersModule,
   ],
   controllers: [QuestionController],
-  providers: [QuestionService],
+  providers: [QuestionService, UserContextService],
 })
 export class QuestionModule {}
