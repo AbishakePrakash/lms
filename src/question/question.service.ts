@@ -29,7 +29,6 @@ export class QuestionService {
   ) {}
   async create(createQuestionDto: CreateQuestionDto) {
     const user: Users = this.userContextService.getUser();
-    console.log({ user });
 
     // createQuestionDto.email = user.email;
     // createQuestionDto.userId = user.id;
@@ -152,7 +151,7 @@ export class QuestionService {
       // if (!updatedRows) {
 
       // }
-      return updatedRows;
+      return { updatedRows: updatedRows.affected };
     } catch (error) {}
   }
 
@@ -169,7 +168,7 @@ export class QuestionService {
       // if (!updatedRows) {
 
       // }
-      return updatedRows;
+      return { updatedRows: updatedRows.affected };
     } catch (error) {}
   }
 }

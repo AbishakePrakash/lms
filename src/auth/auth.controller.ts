@@ -16,10 +16,9 @@ import { ForgotPasswordPayload } from './dto/forgot-payload.dto';
 import { VerifyOtpPayload } from './dto/verify-otp.dto';
 import { AuthGuard } from './guard/authguard';
 import { ResetPasswordPayload } from './dto/reset-payload.dto';
+import { ApiTags } from '@nestjs/swagger';
 
-class Raw {
-  email: string;
-}
+@ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -34,12 +33,12 @@ export class AuthController {
   //   return this.authService.sendMail();
   // }
 
-  @Post('otp')
+  @Post('forgotPassword')
   forgotPassword(@Body() payload: ForgotPasswordPayload) {
     return this.authService.forgotPassword(payload.email);
   }
 
-  @Post('verify')
+  @Post('resetPassword')
   verifyotp(@Body() payload: VerifyOtpPayload) {
     return this.authService.verifyOtp(payload);
   }

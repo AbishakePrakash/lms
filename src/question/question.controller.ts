@@ -11,10 +11,11 @@ import {
 import { QuestionService } from './question.service';
 import { CreateQuestionDto } from './dto/create-question.dto';
 import { UpdateQuestionDto } from './dto/update-question.dto';
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from 'src/auth/guard/authguard';
 
 @ApiBearerAuth('access-token')
+@ApiTags('Questions')
 @Controller('question')
 @UseGuards(AuthGuard)
 export class QuestionController {

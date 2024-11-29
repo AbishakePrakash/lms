@@ -1,8 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Column } from 'typeorm';
 
 export class CreateCourseDto {
+  author?: string;
+  authorId?: number;
+
   @ApiProperty({
-    description: 'Title of the course',
+    description: 'Title of the Course',
     example: 'Introduction to Web Development',
   })
   title: string;
@@ -99,9 +103,7 @@ export class CreateCourseDto {
   })
   price: string;
 
-  @ApiProperty({
-    description: 'Status of the Course',
-    example: 1,
-  })
-  courseStatus: number;
+  courseStatus?: number;
+  approver?: string;
+  approverId?: number;
 }

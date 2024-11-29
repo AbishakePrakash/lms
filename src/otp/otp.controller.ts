@@ -5,15 +5,13 @@ import { VerifyAccountPayload } from './dto/verifyAccount.dto';
 
 @Controller('otp')
 export class OtpController {
-  constructor(private readonly otpService: OtpService) {}
-
-  @Post('password')
-  saveOtp(@Body() otpDto: OtpDto) {
-    return this.otpService.saveOtp(otpDto);
-  }
-
-  @Post('verifyAccount')
-  verifyAccount(@Body() payload: VerifyAccountPayload) {
-    return this.otpService.verifyAccount(payload);
-  }
+  // constructor(private readonly otpService: OtpService) {}
+  // @Post('password')
+  // saveOtp(@Body() otpDto: OtpDto) {
+  //   return this.otpService.saveOtp(otpDto);
+  // }
+  // @Post('verifyAccount')
+  // verifyAccount(@Body() payload: VerifyAccountPayload) {
+  //   return this.otpService.verifyAccount(payload);
+  // }
 }

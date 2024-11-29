@@ -8,6 +8,7 @@ import { UpdateCourseDto } from './dto/update-course.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Course } from './entities/course.entity';
 import { Repository } from 'typeorm';
+import { Users } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class CourseService {
@@ -16,7 +17,10 @@ export class CourseService {
     private readonly courseRepository: Repository<Course>,
   ) {}
 
-  async create(createCourseDto: CreateCourseDto) {
+  async create(createCourseDto: CreateCourseDto, user: Users) {
+    createCourseDto.author = user.username;
+    createCourseDto.authorId = user.id;
+    createCourseDto.courseStatus = 1;
     try {
       const course = await this.courseRepository.save(createCourseDto);
       if (!course) {
@@ -29,8 +33,10 @@ export class CourseService {
     }
   }
 
-  async approveCourse(id: number) {
+  async approveCourse(id: number, user: Users) {
     const updateCourseDto: UpdateCourseDto = {
+      approver: user.username,
+      approverId: user.id,
       courseStatus: 2,
     };
     try {
@@ -99,7 +105,7 @@ export class CourseService {
       if (suspendCourse.affected && suspendCourse.affected === 0) {
         throw new MisdirectedException('Course Suspension failed');
       }
-      return { updatedRows: suspendCourse.affected };
+      return { suspendedRows: suspendCourse.affected };
     } catch (error) {
       console.log({ error });
       throw error;

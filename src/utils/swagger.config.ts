@@ -1,17 +1,25 @@
 import { DocumentBuilder } from '@nestjs/swagger';
 
-// Swagger configuration
-export const options = new DocumentBuilder()
+// Base configuration
+const baseOptions = new DocumentBuilder()
   .setTitle('Q&A')
   .setDescription('The API documentation for my NestJS app')
   .setVersion('1.0')
-  // .addTag('users') // You can add tags based on your module or API group
   .addBearerAuth(
     {
       type: 'http',
       scheme: 'bearer',
       bearerFormat: 'JWT',
     },
-    'access-token', // Name for the security scheme
+    'access-token',
   )
-  .build();
+  .addTag('App')
+  .addTag('Auth')
+  .addTag('Users')
+  .addTag('Courses')
+  .addTag('Questions')
+  .addTag('Answers')
+  .addTag('Comments');
+
+// Exported options
+export const options = baseOptions.build();

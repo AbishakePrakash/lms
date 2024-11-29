@@ -1,17 +1,13 @@
-import { Controller, Get, Request, UseGuards } from '@nestjs/common';
+import { Controller, Get } from '@nestjs/common';
 import { AppService } from './app.service';
-import { AuthService } from './auth/auth.service';
-import { AuthGuard } from './auth/guard/authguard';
-import { UserContextService } from './context/userContext';
+import { ApiTags } from '@nestjs/swagger';
 
 @Controller()
+@ApiTags('App')
 export class AppController {
-  constructor(
-    private readonly appService: AppService,
-    private readonly userContextService: UserContextService,
-  ) {}
+  constructor(private readonly appService: AppService) {}
 
-  @Get()
+  @Get('pulse')
   getHello(): string {
     return this.appService.getHello();
   }

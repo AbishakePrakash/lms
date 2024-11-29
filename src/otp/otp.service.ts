@@ -60,9 +60,9 @@ export class OtpService {
     return data.otp === payload.otp;
   }
 
-  async getOtp(email: string) {
+  async getOtp(email: string, service: string) {
     const otpData = await this.otpRepository.findOne({
-      where: { email },
+      where: { email: email, service: service },
       order: { createdAt: 'DESC' },
     });
     // console.log({ otpData });

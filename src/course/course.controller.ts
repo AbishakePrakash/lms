@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   UseGuards,
+  Request,
 } from '@nestjs/common';
 import { CourseService } from './course.service';
 import { CreateCourseDto } from './dto/create-course.dto';
@@ -14,23 +15,24 @@ import { UpdateCourseDto } from './dto/update-course.dto';
 import { InstructorGuard } from 'src/auth/guard/instructorGuard';
 import { AuthGuard } from 'src/auth/guard/authguard';
 import { AdminGuard } from 'src/auth/guard/adminGuard';
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
-@ApiBearerAuth('access-token') // Links to the defined security scheme
+@ApiBearerAuth('access-token')
+@ApiTags('Courses')
 @Controller('course')
 export class CourseController {
   constructor(private readonly courseService: CourseService) {}
 
   @Post()
   @UseGuards(InstructorGuard)
-  create(@Body() createCourseDto: CreateCourseDto) {
-    return this.courseService.create(createCourseDto);
+  create(@Body() createCourseDto: CreateCourseDto, @Request() req) {
+    return this.courseService.create(createCourseDto, req.user);
   }
 
   @Post('approve/:id')
   @UseGuards(AdminGuard)
-  approveCourse(@Param('id') id: string) {
-    return this.courseService.approveCourse(+id);
+  approveCourse(@Param('id') id: string, @Request() req) {
+    return this.courseService.approveCourse(+id, req.user);
   }
 
   @Get()

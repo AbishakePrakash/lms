@@ -13,11 +13,12 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
 import { VerifyAccountPayload } from 'src/otp/dto/verifyAccount.dto';
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AdminGuard } from 'src/auth/guard/adminGuard';
 import { AuthGuard } from 'src/auth/guard/authguard';
 
-@ApiBearerAuth('access-token') // Links to the defined security scheme
+@ApiBearerAuth('access-token')
+@ApiTags('Users')
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}

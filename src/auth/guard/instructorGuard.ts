@@ -23,7 +23,6 @@ export class InstructorGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
     const token = this.extractTokenFromHeader(request);
-    console.log(token);
 
     if (!token) {
       throw new UnauthorizedException('ins');
@@ -47,7 +46,9 @@ export class InstructorGuard implements CanActivate {
       // 💡 We're assigning the payload to the request object here
       // so that we can access it in our route handlers
 
-      if (payload.role !== 'Instructor' || 'Admin') {
+      console.log(payload.role);
+
+      if (payload.role !== 'Instructor' && payload.role !== 'Admin') {
         throw new UnauthorizedException(
           'Need Instructor Access to execute this Action',
         );

@@ -149,10 +149,23 @@ export class UsersService {
 
   async findAll() {
     const returnData = new ReturnData();
-    const data = await this.usersRepo.find();
+    const data = await this.usersRepo.find({
+      select: [
+        'id',
+        'username',
+        'email',
+        'age',
+        'isActive',
+        'phone',
+        'role',
+        'createdAt',
+        'updatedAt',
+      ],
+    });
     if (data.length === 0) {
       throw new NotFoundException('No users found');
     }
+
     returnData.message = 'Users fetched successfully';
     returnData.value = data;
     return returnData;

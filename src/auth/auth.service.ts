@@ -141,11 +141,11 @@ export class AuthService {
 
   async verifyOtp(otpPayload: VerifyOtpPayload) {
     const returnData = new ReturnData();
-    const stamp = new Date();
     const service = 'PasswordReset';
+    var processLog: object;
     var data: Otp;
     try {
-      data = await this.otpService.getOtp(otpPayload.email);
+      data = await this.otpService.getOtp(otpPayload.email, service);
       // console.log({ data });
     } catch (error) {
       console.log(error);
@@ -155,11 +155,6 @@ export class AuthService {
 
     const user = await this.usersService.findOneByEmail(otpPayload.email);
 
-    var processLog: object;
-
-    // console.log('client', otpPayload.otp);
-    // console.log('db', data.otp);
-
     if (data.otp !== otpPayload.otp) {
       throw new UnauthorizedException('Wrong Otp');
     }
@@ -167,10 +162,16 @@ export class AuthService {
     processLog = { otpVerification: 'OTP Verified' };
 
     const time = data.createdAt;
+    console.log(time);
 
+    const stamp = new Date();
     const revokedTime = new Date(time);
-    const diff = stamp.getTime() - revokedTime.getTime();
-    // console.log({ diff });
+
+    const diff = stamp.getTime() - revokedTime.getTime() - 19800000;
+
+    console.log('Current Time:', stamp);
+    console.log('Created Time:', revokedTime);
+    console.log({ diff });
 
     if (diff > 300000) {
       throw new UnauthorizedException('OTP expired');

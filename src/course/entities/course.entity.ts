@@ -11,6 +11,12 @@ export class Course {
   @PrimaryGeneratedColumn()
   courseId: number;
 
+  @Column({ default: '' })
+  author: string;
+
+  @Column({ default: 0 })
+  authorId: number;
+
   @Column()
   title: string;
 
@@ -61,6 +67,12 @@ export class Course {
 
   @Column({ default: 1 })
   courseStatus: number;
+
+  @Column({ default: 'Waiting for Approval' })
+  approver: string;
+
+  @Column({ default: null })
+  approverId: number;
 
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;

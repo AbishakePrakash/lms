@@ -36,7 +36,7 @@ export class CommentsService {
 
     const payLoad = { ...createCommentDto, email: user.email, userId: user.id };
     try {
-      const comments = await this.commentRepository.save(createCommentDto);
+      const comments = await this.commentRepository.save(payLoad);
       if (!comments) {
         throw new MisdirectedException('Comment not posted');
       }
@@ -202,7 +202,7 @@ export class CommentsService {
       const updatedRows = await this.commentRepository.update(id, {
         likes: checkAvailability.likes + 1,
       });
-      return updatedRows;
+      return { updatedRows: updatedRows.affected };
     } catch (error) {
       console.log({ error });
       throw error;

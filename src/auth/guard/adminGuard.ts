@@ -56,7 +56,6 @@ export class AdminGuard implements CanActivate {
 
   private extractTokenFromHeader(request: Request): string | undefined {
     const authHeader = request.headers.authorization;
-    console.log({ authHeader });
 
     if (!authHeader) {
       throw new UnauthorizedException('Access token Missing');

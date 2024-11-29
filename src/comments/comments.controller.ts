@@ -13,7 +13,10 @@ import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 import { FindByParentDto } from './dto/findByParent.dto';
 import { AuthGuard } from 'src/auth/guard/authguard';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
+@ApiBearerAuth('access-token')
+@ApiTags('Comments')
 @Controller('comments')
 @UseGuards(AuthGuard)
 export class CommentsController {
@@ -49,8 +52,8 @@ export class CommentsController {
     return this.commentsService.likes(+id);
   }
 
-  @Post('parent/:id')
-  findByParent(@Body() payLoad: FindByParentDto) {
-    return this.commentsService.findbyParent(payLoad);
-  }
+  // @Post('parent/:id')
+  // findByParent(@Body() payLoad: FindByParentDto) {
+  //   return this.commentsService.findbyParent(payLoad);
+  // }
 }
