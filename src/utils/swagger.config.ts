@@ -17,6 +17,7 @@ const baseOptions = new DocumentBuilder()
   .addTag('Auth')
   .addTag('Users')
   .addTag('Courses')
+
   .addTag('Questions')
   .addTag('Answers')
   .addTag('Comments');

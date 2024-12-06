@@ -38,8 +38,8 @@ export class Course {
   @Column()
   category: string;
 
-  @Column()
-  instructors: string;
+  @Column('int', { array: true, default: null })
+  instructors: number[];
 
   @Column()
   publishStatus: boolean;

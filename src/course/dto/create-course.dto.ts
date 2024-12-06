@@ -50,10 +50,11 @@ export class CreateCourseDto {
   category: string;
 
   @ApiProperty({
-    description: 'Name(s) of the instructor(s)',
-    example: 'John Doe',
+    description: 'User Id of the instructor(s)',
+    example: [7, 8, 9],
+    type: [Number],
   })
-  instructors: string;
+  instructors: number[];
 
   @ApiProperty({
     description: 'Publish status of the course',

@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import * as dotenv from 'dotenv';
 import { Answer } from 'src/answers/entities/answer.entity';
+import { Chapter } from 'src/chapter/entities/chapter.entity';
 import { Comment } from 'src/comments/entities/comment.entity';
 import { Course } from 'src/course/entities/course.entity';
 import { Otp } from 'src/otp/entities/otp.entity';
@@ -20,7 +21,7 @@ dotenv.config(); // Load environment variables
       database: process.env.DB_DATABASE,
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
-      entities: [Users, Otp, Question, Answer, Comment, Course],
+      entities: [Users, Otp, Question, Answer, Comment, Course, Chapter],
       synchronize: true,
       logging: false,
       ssl: {

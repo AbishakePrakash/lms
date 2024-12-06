@@ -46,8 +46,6 @@ export class InstructorGuard implements CanActivate {
       // 💡 We're assigning the payload to the request object here
       // so that we can access it in our route handlers
 
-      console.log(payload.role);
-
       if (payload.role !== 'Instructor' && payload.role !== 'Admin') {
         throw new UnauthorizedException(
           'Need Instructor Access to execute this Action',

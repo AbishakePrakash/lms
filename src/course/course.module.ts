@@ -9,5 +9,6 @@ import { UserContextService } from 'src/context/userContext';
   imports: [TypeOrmModule.forFeature([Course])],
   controllers: [CourseController],
   providers: [CourseService, UserContextService],
+  exports: [CourseService],
 })
 export class CourseModule {}

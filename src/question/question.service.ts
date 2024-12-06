@@ -86,10 +86,11 @@ export class QuestionService {
       const comments = await this.commentsService.findbyParent(fetchBody);
 
       const postData = {
-        data: question,
+        ...question,
         answers: answers,
         comments: comments,
       };
+
       return postData;
     } catch (error) {
       console.log({ error });
@@ -145,7 +146,7 @@ export class QuestionService {
 
     try {
       const updatedRows = await this.questionRepository.update(id, {
-        vote: checkAvailability.data.vote + 1,
+        vote: checkAvailability.vote + 1,
       });
 
       // if (!updatedRows) {
@@ -163,7 +164,7 @@ export class QuestionService {
 
     try {
       const updatedRows = await this.questionRepository.update(id, {
-        vote: checkAvailability.data.vote - 1,
+        vote: checkAvailability.vote - 1,
       });
       // if (!updatedRows) {
 

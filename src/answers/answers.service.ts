@@ -96,7 +96,7 @@ export class AnswersService {
       const comments = await this.commentsService.findbyParent(fetchBody);
 
       const postData = {
-        data: answer,
+        ...answer,
         comments: comments,
       };
       return postData;
@@ -136,7 +136,7 @@ export class AnswersService {
       }
 
       //update answercount
-      await this.updateAnswerCount(targetAnswer.data.questionId, 'delete');
+      await this.updateAnswerCount(targetAnswer.questionId, 'delete');
 
       return { deletedRows: deletedAnswer.affected };
     } catch (error) {
@@ -154,7 +154,7 @@ export class AnswersService {
 
     try {
       const updatedRows = await this.answersRepository.update(id, {
-        vote: checkAvailability.data.vote + 1,
+        vote: checkAvailability.vote + 1,
       });
 
       // if (!updatedRows) {
@@ -172,7 +172,7 @@ export class AnswersService {
 
     try {
       const updatedRows = await this.answersRepository.update(id, {
-        vote: checkAvailability.data.vote - 1,
+        vote: checkAvailability.vote - 1,
       });
       // if (!updatedRows) {
 
