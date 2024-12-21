@@ -10,6 +10,7 @@ import { CommentsModule } from './comments/comments.module';
 import { AuthModule } from './auth/auth.module';
 import { CourseModule } from './course/course.module';
 import { ChapterModule } from './chapter/chapter.module';
+import { LessonModule } from './lesson/lesson.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { ChapterModule } from './chapter/chapter.module';
     AuthModule,
     CourseModule,
     ChapterModule,
+    LessonModule,
   ],
   controllers: [AppController],
   providers: [AppService],

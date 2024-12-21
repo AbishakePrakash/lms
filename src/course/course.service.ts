@@ -9,12 +9,15 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Course } from './entities/course.entity';
 import { Repository } from 'typeorm';
 import { Users } from 'src/users/entities/user.entity';
+import { Chapter } from 'src/chapter/entities/chapter.entity';
 
 @Injectable()
 export class CourseService {
   constructor(
     @InjectRepository(Course)
     private readonly courseRepository: Repository<Course>,
+    @InjectRepository(Chapter)
+    private readonly chapterRepository: Repository<Chapter>,
   ) {}
 
   async create(createCourseDto: CreateCourseDto, user: Users) {
@@ -53,7 +56,9 @@ export class CourseService {
 
   async findAll() {
     try {
-      const courses = await this.courseRepository.find();
+      const courses = await this.courseRepository.find({
+        where: { courseStatus: 2 },
+      });
       if (courses.length === 0) {
         throw new NotFoundException('No courses Found');
       }
@@ -70,7 +75,9 @@ export class CourseService {
       if (!course) {
         throw new NotFoundException('No course Found for this Id');
       }
-      return course;
+      const chapters = await this.chapterRepository.findBy({ courseId: id });
+
+      return { ...course, chapters: chapters };
     } catch (error) {
       console.log({ error });
       throw error;

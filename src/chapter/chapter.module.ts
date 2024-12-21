@@ -10,5 +10,6 @@ import { CourseModule } from 'src/course/course.module';
   imports: [TypeOrmModule.forFeature([Chapter]), CourseModule],
   controllers: [ChapterController],
   providers: [ChapterService, UserContextService],
+  exports: [ChapterService],
 })
 export class ChapterModule {}

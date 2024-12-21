@@ -16,4 +16,8 @@ class MailData {
   text: string;
 }
 
-export { ReturnData, MailData, PostData };
+function midGround(prev: number, next: number) {
+  return prev + (next - prev) / 2;
+}
+
+export { ReturnData, MailData, PostData, midGround };

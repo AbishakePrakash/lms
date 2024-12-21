@@ -6,6 +6,7 @@ import { Answer } from 'src/answers/entities/answer.entity';
 import { Chapter } from 'src/chapter/entities/chapter.entity';
 import { Comment } from 'src/comments/entities/comment.entity';
 import { Course } from 'src/course/entities/course.entity';
+import { Lesson } from 'src/lesson/entities/lesson.entity';
 import { Otp } from 'src/otp/entities/otp.entity';
 import { Question } from 'src/question/entities/question.entity';
 import { Users } from 'src/users/entities/user.entity';
@@ -21,7 +22,16 @@ dotenv.config(); // Load environment variables
       database: process.env.DB_DATABASE,
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
-      entities: [Users, Otp, Question, Answer, Comment, Course, Chapter],
+      entities: [
+        Users,
+        Otp,
+        Question,
+        Answer,
+        Comment,
+        Course,
+        Chapter,
+        Lesson,
+      ],
       synchronize: true,
       logging: false,
       ssl: {
