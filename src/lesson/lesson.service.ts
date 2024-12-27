@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   MisdirectedException,
   NotFoundException,
@@ -12,12 +13,15 @@ import { Repository } from 'typeorm';
 import { ChangeOrderDto } from './dto/changeOrder.dto';
 import { midGround } from 'src/utils/globalValues';
 import { log } from 'console';
+import { DoubtService } from 'src/doubt/doubt.service';
 
 @Injectable()
 export class LessonService {
   constructor(
     @InjectRepository(Lesson)
     private readonly lessonRepository: Repository<Lesson>,
+    @Inject(DoubtService)
+    private readonly doubtService: DoubtService,
   ) {}
 
   async create(createLessonDto: CreateLessonDto) {
@@ -66,7 +70,8 @@ export class LessonService {
       if (!lesson) {
         throw new NotFoundException('No Lesson found for the given Id');
       }
-      return lesson;
+      const doubts = await this.doubtService.findByLesson(id);
+      return { ...lesson, doubts: doubts };
     } catch (error) {
       throw error;
     }

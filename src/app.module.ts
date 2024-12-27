@@ -13,6 +13,7 @@ import { ChapterModule } from './chapter/chapter.module';
 import { LessonModule } from './lesson/lesson.module';
 import { QuizModule } from './quiz/quiz.module';
 import { McqModule } from './mcq/mcq.module';
+import { DoubtModule } from './doubt/doubt.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { McqModule } from './mcq/mcq.module';
     LessonModule,
     QuizModule,
     McqModule,
+    DoubtModule,
   ],
   controllers: [AppController],
   providers: [AppService],

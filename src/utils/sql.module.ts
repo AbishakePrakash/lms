@@ -6,6 +6,7 @@ import { Answer } from 'src/answers/entities/answer.entity';
 import { Chapter } from 'src/chapter/entities/chapter.entity';
 import { Comment } from 'src/comments/entities/comment.entity';
 import { Course } from 'src/course/entities/course.entity';
+import { Doubt } from 'src/doubt/entities/doubt.entity';
 import { Lesson } from 'src/lesson/entities/lesson.entity';
 import { Mcq } from 'src/mcq/entities/mcq.entity';
 import { Otp } from 'src/otp/entities/otp.entity';
@@ -35,6 +36,7 @@ dotenv.config(); // Load environment variables
         Lesson,
         Quiz,
         Mcq,
+        Doubt,
       ],
       synchronize: true,
       logging: false,
