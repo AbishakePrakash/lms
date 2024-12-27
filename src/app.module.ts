@@ -11,6 +11,8 @@ import { AuthModule } from './auth/auth.module';
 import { CourseModule } from './course/course.module';
 import { ChapterModule } from './chapter/chapter.module';
 import { LessonModule } from './lesson/lesson.module';
+import { QuizModule } from './quiz/quiz.module';
+import { McqModule } from './mcq/mcq.module';
 
 @Module({
   imports: [
@@ -24,6 +26,8 @@ import { LessonModule } from './lesson/lesson.module';
     CourseModule,
     ChapterModule,
     LessonModule,
+    QuizModule,
+    McqModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -72,6 +72,16 @@ export class LessonService {
     }
   }
 
+  async findByChapter(id: number) {
+    try {
+      const lessons = await this.lessonRepository.findBy({ chapterId: id });
+
+      return lessons;
+    } catch (error) {
+      throw error;
+    }
+  }
+
   async update(id: number, updateLessonDto: UpdateLessonDto) {
     try {
       const updateLesson = await this.lessonRepository.update(

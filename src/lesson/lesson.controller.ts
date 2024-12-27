@@ -6,13 +6,20 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
 import { LessonService } from './lesson.service';
 import { CreateLessonDto } from './dto/create-lesson.dto';
 import { UpdateLessonDto } from './dto/update-lesson.dto';
 import { ChangeOrderDto } from './dto/changeOrder.dto';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { InstructorGuard } from 'src/auth/guard/instructorGuard';
+import { AuthGuard } from 'src/auth/guard/authguard';
 
+@ApiBearerAuth('access-token')
+@ApiTags('Lesson')
 @Controller('lesson')
+// @UseGuards(AuthGuard)
 export class LessonController {
   constructor(private readonly lessonService: LessonService) {}
 

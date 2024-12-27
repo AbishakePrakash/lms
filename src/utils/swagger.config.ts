@@ -17,7 +17,10 @@ const baseOptions = new DocumentBuilder()
   .addTag('Auth')
   .addTag('Users')
   .addTag('Courses')
-
+  .addTag('Chapters')
+  .addTag('Lesson')
+  .addTag('Quiz')
+  .addTag('Mcq')
   .addTag('Questions')
   .addTag('Answers')
   .addTag('Comments');

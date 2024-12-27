@@ -7,8 +7,10 @@ import { Chapter } from 'src/chapter/entities/chapter.entity';
 import { Comment } from 'src/comments/entities/comment.entity';
 import { Course } from 'src/course/entities/course.entity';
 import { Lesson } from 'src/lesson/entities/lesson.entity';
+import { Mcq } from 'src/mcq/entities/mcq.entity';
 import { Otp } from 'src/otp/entities/otp.entity';
 import { Question } from 'src/question/entities/question.entity';
+import { Quiz } from 'src/quiz/entities/quiz.entity';
 import { Users } from 'src/users/entities/user.entity';
 
 dotenv.config(); // Load environment variables
@@ -31,6 +33,8 @@ dotenv.config(); // Load environment variables
         Course,
         Chapter,
         Lesson,
+        Quiz,
+        Mcq,
       ],
       synchronize: true,
       logging: false,

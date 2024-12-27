@@ -5,12 +5,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Answer } from './entities/answer.entity';
 import { CommentsModule } from 'src/comments/comments.module';
 import { Question } from 'src/question/entities/question.entity';
-import { UserContextService } from 'src/context/userContext';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Answer, Question]), CommentsModule],
   controllers: [AnswersController],
-  providers: [AnswersService, UserContextService],
+  providers: [AnswersService],
   exports: [AnswersService],
 })
 export class AnswersModule {}

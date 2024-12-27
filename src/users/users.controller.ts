@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   UseGuards,
+  Request,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -40,8 +41,8 @@ export class UsersController {
   }
   @Get('profile')
   @UseGuards(AdminGuard)
-  getProfile() {
-    return this.usersService.getProfile();
+  getProfile(@Request() req) {
+    return req.user;
   }
 
   @Get(':id')

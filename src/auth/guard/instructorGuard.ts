@@ -8,7 +8,6 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
-import { UserContextService } from 'src/context/userContext';
 import { Users } from 'src/users/entities/user.entity';
 
 const jwtSecret = 'lmsbeta';
@@ -17,7 +16,7 @@ const jwtSecret = 'lmsbeta';
 export class InstructorGuard implements CanActivate {
   constructor(
     private jwtService: JwtService,
-    private userContextService: UserContextService,
+    // private userContextService: UserContextService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -37,14 +36,12 @@ export class InstructorGuard implements CanActivate {
       const payload: Users = await this.jwtService.verifyAsync(token, {
         secret: jwtSecret,
       });
-      try {
-        this.userContextService.setUser(payload);
-      } catch (error) {
-        console.error('Error in setting user context:', error);
-        throw error;
-      }
-      // 💡 We're assigning the payload to the request object here
-      // so that we can access it in our route handlers
+      // try {
+      //   this.userContextService.setUser(payload);
+      // } catch (error) {
+      //   console.error('Error in setting user context:', error);
+      //   throw error;
+      // }
 
       if (payload.role !== 'Instructor' && payload.role !== 'Admin') {
         throw new UnauthorizedException(

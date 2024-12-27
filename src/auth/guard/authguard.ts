@@ -8,16 +8,12 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
-import { UserContextService } from 'src/context/userContext';
 
 const jwtSecret = 'lmsbeta';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(
-    private jwtService: JwtService,
-    private userContextService: UserContextService,
-  ) {}
+  constructor(private jwtService: JwtService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
@@ -36,7 +32,6 @@ export class AuthGuard implements CanActivate {
       const payload = await this.jwtService.verifyAsync(token, {
         secret: jwtSecret,
       });
-      this.userContextService.setUser(payload); // Set the user in the request-scoped service
 
       // 💡 We're assigning the payload to the request object here
       // so that we can access it in our route handlers

@@ -11,8 +11,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Chapter } from './entities/chapter.entity';
 import { Repository } from 'typeorm';
 import { CourseService } from 'src/course/course.service';
-import { UserContextService } from 'src/context/userContext';
 import { Users } from 'src/users/entities/user.entity';
+import { LessonService } from 'src/lesson/lesson.service';
 
 @Injectable()
 export class ChapterService {
@@ -21,6 +21,8 @@ export class ChapterService {
     private readonly chapterRepository: Repository<Chapter>,
     @Inject(CourseService)
     private readonly courseService: CourseService,
+    @Inject(LessonService)
+    private readonly lessonService: LessonService,
   ) {}
 
   async ownership(courseId: number, authorId: number) {
@@ -67,7 +69,8 @@ export class ChapterService {
       if (!chapter) {
         throw new NotFoundException('No Chapter found for this Chapter Id');
       }
-      return chapter;
+      const lessons = await this.lessonService.findByChapter(id);
+      return { ...chapter, lessons: lessons };
     } catch (error) {
       console.log({ error });
       return error;

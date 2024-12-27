@@ -12,13 +12,11 @@ import { Repository } from 'typeorm';
 import { CommentsService } from 'src/comments/comments.service';
 import { FindByParentDto } from 'src/comments/dto/findByParent.dto';
 import { Question } from 'src/question/entities/question.entity';
-import { UserContextService } from 'src/context/userContext';
 import { Users } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class AnswersService {
   constructor(
-    private readonly userContextService: UserContextService,
     @InjectRepository(Answer)
     private readonly answersRepository: Repository<Answer>,
     @InjectRepository(Question)
@@ -27,8 +25,7 @@ export class AnswersService {
     private readonly commentsService: CommentsService,
   ) {}
 
-  async create(createAnswerDto: CreateAnswerDto) {
-    const user: Users = this.userContextService.getUser();
+  async create(createAnswerDto: CreateAnswerDto, user: Users) {
     console.log({ user });
 
     const payLoad = { ...createAnswerDto, email: user.email, userId: user.id };

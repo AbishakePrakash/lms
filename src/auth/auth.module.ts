@@ -7,13 +7,12 @@ import { Users } from 'src/users/entities/user.entity';
 import { JwtModule } from '@nestjs/jwt';
 import { OtpModule } from 'src/otp/otp.module';
 import { UsersModule } from 'src/users/users.module';
-import { UserContextService } from 'src/context/userContext';
 
 const jwtSecret = process.env.JWT_SECRET;
 
 @Module({
   controllers: [AuthController],
-  providers: [AuthService, UserContextService],
+  providers: [AuthService],
   imports: [
     OtpModule,
     UsersModule,

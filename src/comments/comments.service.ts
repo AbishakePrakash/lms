@@ -15,14 +15,11 @@ import { Question } from 'src/question/entities/question.entity';
 import { UpdateQuestionDto } from 'src/question/dto/update-question.dto';
 import { CreateAnswerDto } from 'src/answers/dto/create-answer.dto';
 import { FindByParentDto } from './dto/findByParent.dto';
-import { UserContextService } from 'src/context/userContext';
 import { Users } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class CommentsService {
   constructor(
-    private readonly userContextService: UserContextService,
-
     @InjectRepository(Comment)
     private readonly commentRepository: Repository<Comment>,
     @InjectRepository(Answer)
@@ -30,8 +27,7 @@ export class CommentsService {
     @InjectRepository(Question)
     private readonly questionRepository: Repository<Question>,
   ) {}
-  async create(createCommentDto: CreateCommentDto) {
-    const user: Users = this.userContextService.getUser();
+  async create(createCommentDto: CreateCommentDto, user: Users) {
     console.log({ user });
 
     const payLoad = { ...createCommentDto, email: user.email, userId: user.id };

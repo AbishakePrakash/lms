@@ -15,6 +15,12 @@ export class CreateLessonDto {
   description: string;
 
   @ApiProperty({
+    description: 'The ID of the course this lesson belongs to',
+    example: 5,
+  })
+  courseId: number;
+
+  @ApiProperty({
     description: 'The ID of the chapter this lesson belongs to',
     example: 2,
   })

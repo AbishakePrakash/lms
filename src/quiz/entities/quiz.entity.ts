@@ -7,9 +7,9 @@ import {
 } from 'typeorm';
 
 @Entity()
-export class Lesson {
+export class Quiz {
   @PrimaryGeneratedColumn()
-  lessonId: number;
+  quizId: number;
 
   @Column()
   title: string;
@@ -17,17 +17,17 @@ export class Lesson {
   @Column()
   description: string;
 
-  @Column({ default: null })
+  @Column()
   courseId: number;
 
   @Column()
   chapterId: number;
 
-  @Column({ type: 'float' })
-  order: number;
+  @Column('int', { array: true, default: [] })
+  questions: number[];
 
-  @Column({ default: '' })
-  prerequisites: string;
+  @Column()
+  authorId: number;
 
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;
