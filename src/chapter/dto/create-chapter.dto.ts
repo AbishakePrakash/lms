@@ -15,13 +15,9 @@ export class CreateChapterDto {
 
   @ApiProperty({
     description: 'ID of the course this chapter belongs to',
-    example: 10,
+    example: 1,
   })
   courseId: number;
 
-  @ApiProperty({
-    description: 'Order of the chapter within the course',
-    example: 1,
-  })
-  order: number;
+  order?: number;
 }

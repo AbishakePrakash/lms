@@ -114,45 +114,60 @@ export class LessonService {
     }
   }
 
-  async changeOrder(payload: ChangeOrderDto) {
+  async changeOrder(payload: ChangeOrderDto, string: string) {
+    console.log(string);
+    var previousOrder;
     try {
-      const previousLesson: Lesson = await this.findOne(payload.prevId);
-      const previousOrder = previousLesson.order;
+      console.log('Log B');
+
+      try {
+        const previousLesson: Lesson = await this.findOne(payload.prevId);
+        if (!previousLesson) {
+          throw new MisdirectedException("Can't find previous lesson");
+        }
+        previousOrder = previousLesson.order;
+      } catch (error) {
+        throw error;
+      }
+
+      console.log('Log C');
 
       console.log({ previousOrder });
 
-      const nextLesson = await this.lessonRepository
-        .createQueryBuilder('lesson')
-        .where('lesson.order > :previousOrder', { previousOrder })
-        .orderBy('lesson.order', 'ASC')
-        .select(['lesson.lessonId', 'lesson.order'])
-        .getOne();
+      // const nextLesson = await this.lessonRepository
+      //   .createQueryBuilder('lesson')
+      //   .where('lesson.order > :previousOrder', { previousOrder })
+      //   .orderBy('lesson.order', 'ASC')
+      //   .select(['lesson.lessonId', 'lesson.order'])
+      //   .getOne();
 
-      if (!nextLesson) {
-        throw new BadRequestException('No next lesson found');
-      }
+      // if (!nextLesson) {
+      //   throw new BadRequestException('No next lesson found');
+      // }
 
-      const newOrder = midGround(previousOrder, nextLesson.order);
+      // const newOrder = midGround(previousOrder, nextLesson.order);
 
-      const returnData = {
-        prevId: previousLesson.lessonId,
-        prevOrder: previousOrder,
-        nextOrder: nextLesson.order,
-        nextId: nextLesson.lessonId,
-        newOrder: newOrder,
-      };
+      // const returnData = {
+      //   prevId: previousLesson.lessonId,
+      //   prevOrder: previousOrder,
+      //   nextOrder: nextLesson.order,
+      //   nextId: nextLesson.lessonId,
+      //   newOrder: newOrder,
+      // };
 
-      log(returnData);
+      // log(returnData);
 
-      const updateLessonDto: UpdateLessonDto = {
-        order: newOrder,
-      };
+      // const updateLessonDto: UpdateLessonDto = {
+      //   order: newOrder,
+      // };
 
-      const updateOrder = await this.update(payload.lessonId, updateLessonDto);
+      // const updateOrder = await this.update(payload.lessonId, updateLessonDto);
 
-      return updateOrder;
+      // return updateOrder;
     } catch (error) {
-      console.log(2);
+      console.log('Log B_');
+
+      console.log(error);
       throw error;
     }
   }

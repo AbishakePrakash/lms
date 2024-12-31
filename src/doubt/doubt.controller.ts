@@ -38,6 +38,11 @@ export class DoubtController {
     return this.doubtService.findOne(+id);
   }
 
+  @Get('lesson/:id')
+  findByLesson(@Param('id') id: string) {
+    return this.doubtService.findByLesson(+id);
+  }
+
   @Get('instructor/:id')
   findByInstructor(@Param('id') id: string) {
     return this.doubtService.findByInstructor(+id);

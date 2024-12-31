@@ -81,7 +81,7 @@ export class DoubtService {
     try {
       const doubts = await this.doubtService.findBy({ lessonId: id });
       if (doubts.length === 0) {
-        throw new NotFoundException('No doubts found for this Lesson');
+        throw new NotFoundException('No doubts found for this Lesson Id');
       }
       return doubts;
     } catch (error) {

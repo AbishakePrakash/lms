@@ -31,6 +31,14 @@ export class ChapterService {
   }
 
   async create(createChapterDto: CreateChapterDto, user: Users) {
+    const previousChapter = await this.chapterRepository.findOne({
+      where: {
+        courseId: createChapterDto.courseId,
+      },
+      order: { order: 'DESC' },
+    });
+    createChapterDto.order = previousChapter ? previousChapter.order + 1 : 1;
+
     const isAuthor = await this.ownership(createChapterDto.courseId, user.id);
     if (isAuthor) {
       try {

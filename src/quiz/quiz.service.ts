@@ -8,6 +8,7 @@ import { UpdateQuizDto } from './dto/update-quiz.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Quiz } from './entities/quiz.entity';
 import { Repository } from 'typeorm';
+import { Users } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class QuizService {
@@ -16,7 +17,8 @@ export class QuizService {
     private readonly quizRepository: Repository<Quiz>,
   ) {}
 
-  async create(createQuizDto: CreateQuizDto, user) {
+  async create(createQuizDto: CreateQuizDto, user: Users) {
+    createQuizDto.authorId = user.id;
     try {
       const quiz = await this.quizRepository.save(createQuizDto);
       if (!quiz) {

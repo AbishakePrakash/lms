@@ -6,15 +6,18 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
 import { McqService } from './mcq.service';
 import { CreateMcqDto } from './dto/create-mcq.dto';
 import { UpdateMcqDto } from './dto/update-mcq.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { InstructorGuard } from 'src/auth/guard/instructorGuard';
 
 @ApiBearerAuth('access-token')
 @ApiTags('Mcq')
 @Controller('mcq')
+@UseGuards(InstructorGuard)
 export class McqController {
   constructor(private readonly mcqService: McqService) {}
 

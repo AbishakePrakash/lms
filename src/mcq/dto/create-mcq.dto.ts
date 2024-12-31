@@ -32,35 +32,35 @@ export class CreateMcqDto {
 
   @ApiProperty({
     description: 'The text of the question',
-    example: 'What is the capital of France?',
+    example: 'What is the file extension of the HTML file?',
   })
   @IsString()
   question: string;
 
   @ApiProperty({
     description: 'Option 1 for the MCQ',
-    example: 'Paris',
+    example: '.txt',
   })
   @IsString()
   option1: string;
 
   @ApiProperty({
     description: 'Option 2 for the MCQ',
-    example: 'London',
+    example: '.xml',
   })
   @IsString()
   option2: string;
 
   @ApiProperty({
     description: 'Option 3 for the MCQ',
-    example: 'Berlin',
+    example: '.html',
   })
   @IsString()
   option3: string;
 
   @ApiProperty({
     description: 'Option 4 for the MCQ',
-    example: 'Rome',
+    example: '.file',
   })
   @IsString()
   option4: string;
@@ -75,6 +75,10 @@ export class CreateMcqDto {
   @IsString()
   option5?: string;
 
+  @ApiProperty({
+    description: 'Right option for the question',
+    example: 3,
+  })
   @IsInt()
   @Min(1)
   @Max(5)
