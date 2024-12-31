@@ -8,8 +8,10 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
+import * as dotenv from 'dotenv';
 
-const jwtSecret = 'lmsbeta';
+dotenv.config();
+const jwtSecret = process.env.JWT_SECRET;
 
 @Injectable()
 export class AuthGuard implements CanActivate {

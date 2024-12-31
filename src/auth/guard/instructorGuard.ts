@@ -9,8 +9,10 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
 import { Users } from 'src/users/entities/user.entity';
+import * as dotenv from 'dotenv';
 
-const jwtSecret = 'lmsbeta';
+dotenv.config();
+const jwtSecret = process.env.JWT_SECRET;
 
 @Injectable()
 export class InstructorGuard implements CanActivate {
@@ -26,6 +28,7 @@ export class InstructorGuard implements CanActivate {
     if (!token) {
       throw new UnauthorizedException('ins');
     }
+
     if (!jwtSecret) {
       throw new InternalServerErrorException(
         'JWT_SECRET is not defined in environment variables.',
