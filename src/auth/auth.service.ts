@@ -9,9 +9,9 @@ import {
 import { Users } from 'src/users/entities/user.entity';
 import { Repository, UpdateResult } from 'typeorm';
 import { SignInCred } from 'src/users/dto/signin-user.dto';
-import { MailData, ReturnData } from 'src/Utils/globalValues';
+import { MailData, ReturnData } from '../utils/globalValues';
 import { JwtService } from '@nestjs/jwt';
-import triggerMaileEvent from 'src/Utils/nodeMailer';
+import triggerMaileEvent from '../utils/nodeMailer';
 import { OtpDto } from 'src/otp/dto/create-otp.dto';
 import { OtpService } from 'src/otp/otp.service';
 import { VerifyOtpPayload } from './dto/verify-otp.dto';
