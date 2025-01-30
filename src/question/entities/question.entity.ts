@@ -17,6 +17,9 @@ export class Question {
   @Column()
   email: string;
 
+  @Column({ default: 'No title given' })
+  title: string;
+
   @Column()
   question: string;
 

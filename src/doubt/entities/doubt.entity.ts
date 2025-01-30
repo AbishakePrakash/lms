@@ -20,8 +20,14 @@ export class Doubt {
   @Column()
   instructorId: number;
 
+  @Column({ default: false })
+  isCleared: boolean;
+
   @Column()
   question: string;
+
+  @Column({ default: null })
+  response: string;
 
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;

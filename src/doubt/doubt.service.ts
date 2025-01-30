@@ -9,6 +9,7 @@ import { Users } from 'src/users/entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Doubt } from './entities/doubt.entity';
 import { Repository } from 'typeorm';
+import { UpdateResponseDto } from './dto/update-response.dto';
 
 @Injectable()
 export class DoubtService {
@@ -48,6 +49,20 @@ export class DoubtService {
         throw new NotFoundException('No doubt found for this Doubt Id');
       }
       return doubt;
+    } catch (error) {
+      throw error;
+    }
+  }
+  async response(id, updateResponseDto: UpdateResponseDto) {
+    try {
+      const response = await this.doubtService.update(id, {
+        ...updateResponseDto,
+        isCleared: true,
+      });
+      if (!response) {
+        throw new NotFoundException("Response didn't updated for the Doubt");
+      }
+      return response;
     } catch (error) {
       throw error;
     }

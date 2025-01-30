@@ -15,6 +15,8 @@ import { UpdateDoubtDto } from './dto/update-doubt.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Request as Exreq } from 'express';
 import { AuthGuard } from 'src/auth/guard/authguard';
+import { UpdateResponseDto } from './dto/update-response.dto';
+import { InstructorGuard } from 'src/auth/guard/instructorGuard';
 
 @ApiBearerAuth('access-token')
 @ApiTags('Doubt')
@@ -51,6 +53,15 @@ export class DoubtController {
   @Get('student/:id')
   findByStudent(@Param('id') id: string) {
     return this.doubtService.findByStudent(+id);
+  }
+
+  @Patch('response/:id')
+  @UseGuards(InstructorGuard)
+  respond(
+    @Param('id') id: string,
+    @Body() updateResponseDto: UpdateResponseDto,
+  ) {
+    return this.doubtService.response(+id, updateResponseDto);
   }
 
   @Patch(':id')

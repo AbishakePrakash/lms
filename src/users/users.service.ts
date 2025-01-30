@@ -1,8 +1,10 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Inject,
   Injectable,
   InternalServerErrorException,
+  MisdirectedException,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -17,6 +19,7 @@ import { OtpDto } from 'src/otp/dto/create-otp.dto';
 import { VerifyAccountPayload } from 'src/otp/dto/verifyAccount.dto';
 import { MailData, ReturnData } from 'src/utils/globalValues';
 import triggerMaileEvent from 'src/utils/nodeMailer';
+import { uploadToS3 } from 'src/utils/awsBucket';
 
 @Injectable()
 export class UsersService {
@@ -120,10 +123,37 @@ export class UsersService {
     return returnData;
   }
 
+  async uploadFile(file: Express.Multer.File, id: number) {
+    try {
+      const { buffer, originalname, mimetype } = file;
+
+      // console.log({
+      //   buffer: buffer,
+      //   originalname: originalname,
+      //   mimetype: mimetype,
+      // });
+
+      const s3Url = await uploadToS3(buffer, originalname, mimetype);
+
+      if (!s3Url) {
+        throw new MisdirectedException('No url returned from S3');
+      }
+      console.log('File uploaded:', s3Url);
+
+      const updateProfile = await this.usersRepo.update(id, {
+        profilePicture: s3Url,
+      });
+
+      return { ...updateProfile, s3Url: s3Url };
+    } catch (error) {
+      console.error('Error uploading file:', error.message);
+      return 'File upload failed!';
+    }
+  }
+
   async setAsActive(payload: VerifyAccountPayload) {
     const returnData = new ReturnData();
     const user = await this.findOneByEmail(payload.email);
-    payload.service = 'verifyAccount';
     const verifyOtp = await this.otpService.verifyAccount(payload);
     if (!verifyOtp) {
       throw new UnauthorizedException('Incorrect OTP');
@@ -141,6 +171,32 @@ export class UsersService {
     returnData.message = 'User verified successfully';
     returnData.value = user.email;
     return returnData;
+  }
+
+  async assign(id: number) {
+    const updateUserDto: UpdateUserDto = {
+      role: 'Instructor',
+    };
+
+    const verifyUser = await this.findOne(id);
+
+    // Add more conditions to filter high level students
+
+    if (!verifyUser.isActive || verifyUser.role !== 'Student') {
+      throw new ForbiddenException('User not allowed to promote as Instructor');
+    }
+
+    try {
+      const assignUser = await this.usersRepo.update(id, updateUserDto);
+      if (!assignUser) {
+        throw new MisdirectedException('Promotion failed');
+      }
+      return assignUser;
+    } catch (error) {
+      console.log({ error });
+
+      throw error;
+    }
   }
 
   async findAll() {
@@ -168,11 +224,15 @@ export class UsersService {
   }
 
   async findOne(id: number) {
-    const returnData = new ReturnData();
-    const data = await this.usersRepo.findOneBy({ id: id });
-    returnData.message = 'User fetched successfully';
-    returnData.value = data;
-    return returnData;
+    try {
+      const user = await this.usersRepo.findOneBy({ id });
+      if (!user) {
+        throw new NotFoundException('No user found for this userId');
+      }
+      return user;
+    } catch (error) {
+      throw error;
+    }
   }
 
   async findOneByEmail(email: string) {

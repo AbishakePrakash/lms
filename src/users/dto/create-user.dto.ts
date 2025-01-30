@@ -10,7 +10,6 @@ export class CreateUserDto {
   })
   email: string;
 
-  @ApiProperty({ description: 'Role of the user', example: 'Admin' })
   role: string;
 
   @ApiProperty({
@@ -28,9 +27,5 @@ export class CreateUserDto {
   })
   password: string;
 
-  @ApiProperty({
-    description: 'Indicates if the user is active or not',
-    example: false,
-  })
   isActive: boolean;
 }

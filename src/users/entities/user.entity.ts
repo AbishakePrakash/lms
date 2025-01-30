@@ -18,7 +18,7 @@ export class Users {
   @Column()
   email: string;
 
-  @Column()
+  @Column({ default: 'Student' })
   role: string;
 
   @Column()
@@ -27,11 +27,14 @@ export class Users {
   @Column()
   age: string;
 
-  @Column()
+  @Column({ default: false })
   isActive: boolean;
 
   @Column()
   password: string;
+
+  @Column({ default: '' })
+  profilePicture: string;
 
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;
