@@ -8,12 +8,17 @@ import {
   Delete,
   UseGuards,
   Request,
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException,
 } from '@nestjs/common';
 import { QuestionService } from './question.service';
 import { CreateQuestionDto } from './dto/create-question.dto';
 import { UpdateQuestionDto } from './dto/update-question.dto';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from 'src/auth/guard/authguard';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { CreateQuestionWithFileDto } from './dto/create-question_v2.dto';
 
 @ApiBearerAuth('access-token')
 @ApiTags('Questions')
@@ -22,10 +27,29 @@ import { AuthGuard } from 'src/auth/guard/authguard';
 export class QuestionController {
   constructor(private readonly questionService: QuestionService) {}
 
+  // @Post()
+  // @UseGuards(AuthGuard)
+  // create(@Body() createQuestionDto: CreateQuestionDto, @Request() req) {
+  //   return this.questionService.create(createQuestionDto, req.user);
+  // }
+
   @Post()
   @UseGuards(AuthGuard)
-  create(@Body() createQuestionDto: CreateQuestionDto, @Request() req) {
-    return this.questionService.create(createQuestionDto, req.user);
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiConsumes('multipart/form-data') // Specifies the content type for the request
+  @ApiBody({
+    description: 'Upload an image file with question details',
+    type: CreateQuestionWithFileDto, // Uses the DTO directly
+  })
+  create(
+    @UploadedFile() file: Express.Multer.File,
+    @Body() createQuestionDto: CreateQuestionDto,
+    @Request() req,
+  ) {
+    if (!file) {
+      throw new BadRequestException('No file uploaded');
+    }
+    return this.questionService.create(createQuestionDto, req.user, file);
   }
 
   @Get()

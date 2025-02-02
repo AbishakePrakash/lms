@@ -14,7 +14,6 @@ import { LessonModule } from './lesson/lesson.module';
 import { QuizModule } from './quiz/quiz.module';
 import { McqModule } from './mcq/mcq.module';
 import { DoubtModule } from './doubt/doubt.module';
-import { UploadModule } from './upload/upload.module';
 
 @Module({
   imports: [
@@ -31,7 +30,6 @@ import { UploadModule } from './upload/upload.module';
     QuizModule,
     McqModule,
     DoubtModule,
-    UploadModule,
   ],
   controllers: [AppController],
   providers: [AppService],

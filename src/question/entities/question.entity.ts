@@ -23,6 +23,12 @@ export class Question {
   @Column()
   question: string;
 
+  @Column({ default: null })
+  refImage: string;
+
+  @Column({ type: 'text', default: null })
+  richText: string;
+
   @Column({ default: 0 })
   answersCount: number;
 

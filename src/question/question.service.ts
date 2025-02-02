@@ -14,6 +14,8 @@ import { CommentsService } from 'src/comments/comments.service';
 import { FindByParentDto } from 'src/comments/dto/findByParent.dto';
 import { AnswersService } from 'src/answers/answers.service';
 import { Users } from 'src/users/entities/user.entity';
+import { purifyHtml } from 'src/utils/sanitizeHtml';
+import { uploadToS3 } from 'src/utils/awsBucket';
 
 @Injectable()
 export class QuestionService {
@@ -25,25 +27,74 @@ export class QuestionService {
     @Inject(AnswersService)
     private readonly answersService: AnswersService,
   ) {}
-  async create(createQuestionDto: CreateQuestionDto, user: Users) {
-    // createQuestionDto.email = user.email;
-    // createQuestionDto.userId = user.id;
 
-    const payLoad = {
-      ...createQuestionDto,
-      email: user.email,
-      userId: user.id,
-    };
+  // async create(createQuestionDto: CreateQuestionDto, user: Users) {
+  //   // HTML sanitizing
+  //   const sanitizedHtml = purifyHtml(createQuestionDto.richText);
+  //   createQuestionDto.richText = sanitizedHtml;
 
-    try {
-      const question = await this.questionRepository.save(payLoad);
-      if (!question) {
-        throw new MisdirectedException('Question posting failed');
-      }
-      return question;
-    } catch (error) {
-      console.log({ error });
-    }
+  //   const payLoad = {
+  //     ...createQuestionDto,
+  //     email: user.email,
+  //     userId: user.id,
+  //   };
+
+  //   try {
+  //     const question = await this.questionRepository.save(payLoad);
+  //     if (!question) {
+  //       throw new MisdirectedException('Question posting failed');
+  //     }
+  //     return question;
+  //   } catch (error) {
+  //     console.log({ error });
+  //     return error;
+  //   }
+  // }
+
+  async create(
+    createQuestionDto: CreateQuestionDto,
+    user: Users,
+    file: Express.Multer.File,
+  ) {
+    // HTML sanitizing
+    const sanitizedHtml = purifyHtml(createQuestionDto.richText);
+    createQuestionDto.richText = sanitizedHtml;
+
+    console.log({ createQuestionDto });
+
+    // Image upload to S3
+    // try {
+    //   const { buffer, originalname, mimetype } = file;
+    //   const s3Url = await uploadToS3(buffer, originalname, mimetype, 'profile');
+
+    //   if (!s3Url) {
+    //     throw new MisdirectedException('No url returned from S3');
+    //   }
+    //   console.log('File uploaded:', s3Url);
+
+    //   // Update sanitized HTML & refImage link
+    //   const payLoad = {
+    //     ...createQuestionDto,
+    //     email: user.email,
+    //     userId: user.id,
+    //     refImage: s3Url,
+    //   };
+
+    //   // Saving question to DB
+    //   try {
+    //     const question = await this.questionRepository.save(payLoad);
+    //     if (!question) {
+    //       throw new MisdirectedException('Question posting failed');
+    //     }
+    //     return question;
+    //   } catch (error) {
+    //     console.log({ error });
+    //     return error;
+    //   }
+    // } catch (error) {
+    //   console.error('Error uploading file:', error.message);
+    //   return 'File upload failed!';
+    // }
   }
 
   async findAll() {

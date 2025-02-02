@@ -34,6 +34,7 @@ export class UsersController {
   }
 
   @Post('image/:id')
+  @UseGuards(AuthGuard)
   @UseInterceptors(FileInterceptor('file'))
   @ApiConsumes('multipart/form-data') // Specifies the content type for the request
   @ApiBody({
@@ -50,14 +51,11 @@ export class UsersController {
       },
     },
   })
-  async uploadFile(
-    @Param('id') id: string,
-    @UploadedFile() file: Express.Multer.File,
-  ) {
+  async uploadFile(@UploadedFile() file: Express.Multer.File, @Request() req) {
     if (!file) {
       throw new BadRequestException('No file uploaded');
     }
-    return await this.usersService.uploadFile(file, +id);
+    return await this.usersService.uploadFile(file, req.user);
   }
 
   @Post('verifyAccount')

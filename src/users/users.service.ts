@@ -36,7 +36,6 @@ export class UsersService {
     const returnData = new ReturnData();
     try {
       const data = await triggerMaileEvent(mailData);
-      console.log({ data });
       const status = data.split(' ')[0];
       if (status === '250') {
         returnData.message = 'Mail sent successfully';
@@ -123,7 +122,7 @@ export class UsersService {
     return returnData;
   }
 
-  async uploadFile(file: Express.Multer.File, id: number) {
+  async uploadFile(file: Express.Multer.File, user: Users) {
     try {
       const { buffer, originalname, mimetype } = file;
 
@@ -133,14 +132,14 @@ export class UsersService {
       //   mimetype: mimetype,
       // });
 
-      const s3Url = await uploadToS3(buffer, originalname, mimetype);
+      const s3Url = await uploadToS3(buffer, originalname, mimetype, 'profile');
 
       if (!s3Url) {
         throw new MisdirectedException('No url returned from S3');
       }
       console.log('File uploaded:', s3Url);
 
-      const updateProfile = await this.usersRepo.update(id, {
+      const updateProfile = await this.usersRepo.update(user.id, {
         profilePicture: s3Url,
       });
 

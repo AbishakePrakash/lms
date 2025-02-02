@@ -25,11 +25,12 @@ export const uploadToS3 = async (
   buffer: Buffer,
   filename: string,
   mimetype: string,
+  path: string,
 ) => {
   //   console.log('aws1');
 
   //   const bucketName = 'haloquant';
-  const uniqueFilename = `test/${Date.now()}_${filename}`;
+  const uniqueFilename = `${path}/${Date.now()}_${filename}`;
 
   const params = {
     Bucket: bucketName,

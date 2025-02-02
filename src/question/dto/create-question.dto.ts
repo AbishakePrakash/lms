@@ -27,6 +27,12 @@ export class CreateQuestionDto {
   question: string;
 
   @ApiProperty({
+    description: 'HTML Content',
+    example: '<p>RichText Content.</p>',
+  })
+  richText: string;
+
+  @ApiProperty({
     description: 'Tags related to the question',
     example: ['sql', 'rdbms', 'database'],
   })
