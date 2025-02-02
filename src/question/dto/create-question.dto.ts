@@ -14,6 +14,12 @@ export class CreateQuestionDto {
   // email: string;
 
   @ApiProperty({
+    description: 'Title of the question being asked',
+    example: 'Nest JS',
+  })
+  title: string;
+
+  @ApiProperty({
     description: 'Content of the question being asked',
     example: 'What is NestJS?',
   })
