@@ -26,7 +26,7 @@ export class AnswersService {
   ) {}
 
   async create(createAnswerDto: CreateAnswerDto, user: Users) {
-    console.log({ user });
+    // console.log({ user });
 
     const payLoad = { ...createAnswerDto, email: user.email, userId: user.id };
     try {
@@ -151,12 +151,9 @@ export class AnswersService {
 
     try {
       const updatedRows = await this.answersRepository.update(id, {
-        vote: checkAvailability.vote + 1,
+        upvote: checkAvailability.upvote + 1,
       });
 
-      // if (!updatedRows) {
-
-      // }
       return updatedRows;
     } catch (error) {}
   }
@@ -169,7 +166,7 @@ export class AnswersService {
 
     try {
       const updatedRows = await this.answersRepository.update(id, {
-        vote: checkAvailability.vote - 1,
+        downvote: checkAvailability.downvote + 1,
       });
       // if (!updatedRows) {
 

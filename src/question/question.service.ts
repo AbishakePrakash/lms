@@ -129,8 +129,8 @@ export class QuestionService {
       return { deletedRows: deleteQuestion.affected };
     } catch (error) {
       console.log({ error });
+      throw error;
     }
-    return `This action removes a #${id} question`;
   }
 
   async upVote(id: number) {
@@ -142,12 +142,9 @@ export class QuestionService {
 
     try {
       const updatedRows = await this.questionRepository.update(id, {
-        vote: checkAvailability.vote + 1,
+        upvote: checkAvailability.upvote + 1,
       });
 
-      // if (!updatedRows) {
-
-      // }
       return { updatedRows: updatedRows.affected };
     } catch (error) {}
   }
@@ -160,7 +157,7 @@ export class QuestionService {
 
     try {
       const updatedRows = await this.questionRepository.update(id, {
-        vote: checkAvailability.vote - 1,
+        downvote: checkAvailability.downvote + 1,
       });
       // if (!updatedRows) {
 
