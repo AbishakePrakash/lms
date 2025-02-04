@@ -17,17 +17,11 @@ export class Question {
   @Column()
   email: string;
 
-  @Column({ default: 'No title given' })
+  @Column({ default: '' })
   title: string;
 
   @Column()
   question: string;
-
-  @Column({ default: null })
-  refImage: string;
-
-  @Column({ type: 'text', default: null })
-  richText: string;
 
   @Column({ default: 0 })
   answersCount: number;
@@ -39,7 +33,10 @@ export class Question {
   tags: string[];
 
   @Column({ default: 0 })
-  vote: number;
+  upvote: number;
+
+  @Column({ default: 0 })
+  downvote: number;
 
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;

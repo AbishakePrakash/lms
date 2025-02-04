@@ -211,7 +211,7 @@ export class QuestionService {
 
     try {
       const updatedRows = await this.questionRepository.update(id, {
-        vote: checkAvailability.vote + 1,
+        upvote: checkAvailability.upvote + 1,
       });
 
       // if (!updatedRows) {
@@ -229,7 +229,7 @@ export class QuestionService {
 
     try {
       const updatedRows = await this.questionRepository.update(id, {
-        vote: checkAvailability.vote - 1,
+        downvote: checkAvailability.downvote + 1,
       });
       // if (!updatedRows) {
 
