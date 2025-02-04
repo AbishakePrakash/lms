@@ -14,6 +14,7 @@ import { ChangeOrderDto } from './dto/changeOrder.dto';
 import { midGround } from 'src/utils/globalValues';
 import { log } from 'console';
 import { DoubtService } from 'src/doubt/doubt.service';
+import { uploadToS3 } from 'src/utils/awsBucket';
 
 @Injectable()
 export class LessonService {
@@ -24,7 +25,7 @@ export class LessonService {
     private readonly doubtService: DoubtService,
   ) {}
 
-  async create(createLessonDto: CreateLessonDto) {
+  async create(createLessonDto: CreateLessonDto, file: Express.Multer.File) {
     const maxOrder = await this.lessonRepository.find({
       select: ['order'],
       order: { order: 'DESC' },
@@ -40,8 +41,23 @@ export class LessonService {
       createLessonDto.order = length + 1;
     }
 
+    // Video Upload
+
+    const { buffer, originalname, mimetype, path } = file;
+
+    if (!mimetype.startsWith('video/')) {
+      throw new BadRequestException('Only video files are allowed!');
+    }
+
+    const videoUrl = await uploadToS3(buffer, originalname, mimetype, 'lesson');
+
+    const payLoad = {
+      ...createLessonDto,
+      video: videoUrl,
+    };
+
     try {
-      const lesson = await this.lessonRepository.save(createLessonDto);
+      const lesson = await this.lessonRepository.save(payLoad);
       if (!lesson) {
         throw new MisdirectedException('Lesson not created');
       }

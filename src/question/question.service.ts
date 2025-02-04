@@ -1,6 +1,7 @@
 import {
   Inject,
   Injectable,
+  InternalServerErrorException,
   MisdirectedException,
   NotFoundException,
 } from '@nestjs/common';
@@ -58,43 +59,48 @@ export class QuestionService {
   ) {
     // HTML sanitizing
     const sanitizedHtml = purifyHtml(createQuestionDto.richText);
+    // console.log({ createQuestionDto });
+
+    const parsifiedTags = createQuestionDto.tags.split(',');
     createQuestionDto.richText = sanitizedHtml;
 
-    console.log({ createQuestionDto });
+    const { tags, ...newDto } = createQuestionDto;
+    console.log({ newDto });
 
     // Image upload to S3
-    // try {
-    //   const { buffer, originalname, mimetype } = file;
-    //   const s3Url = await uploadToS3(buffer, originalname, mimetype, 'profile');
+    try {
+      const { buffer, originalname, mimetype } = file;
+      const s3Url = await uploadToS3(buffer, originalname, mimetype, 'profile');
 
-    //   if (!s3Url) {
-    //     throw new MisdirectedException('No url returned from S3');
-    //   }
-    //   console.log('File uploaded:', s3Url);
+      if (!s3Url) {
+        throw new MisdirectedException('No url returned from S3');
+      }
+      console.log('File uploaded:', s3Url);
 
-    //   // Update sanitized HTML & refImage link
-    //   const payLoad = {
-    //     ...createQuestionDto,
-    //     email: user.email,
-    //     userId: user.id,
-    //     refImage: s3Url,
-    //   };
+      // Update sanitized HTML & refImage link
+      const payLoad = {
+        ...newDto,
+        email: user.email,
+        userId: user.id,
+        refImage: s3Url,
+        tags: parsifiedTags,
+      };
 
-    //   // Saving question to DB
-    //   try {
-    //     const question = await this.questionRepository.save(payLoad);
-    //     if (!question) {
-    //       throw new MisdirectedException('Question posting failed');
-    //     }
-    //     return question;
-    //   } catch (error) {
-    //     console.log({ error });
-    //     return error;
-    //   }
-    // } catch (error) {
-    //   console.error('Error uploading file:', error.message);
-    //   return 'File upload failed!';
-    // }
+      // Saving question to DB
+      try {
+        const question = await this.questionRepository.save(payLoad);
+        if (!question) {
+          throw new MisdirectedException('Question posting failed');
+        }
+        return question;
+      } catch (error) {
+        console.log({ error });
+        return error;
+      }
+    } catch (error) {
+      console.error('Error uploading file:', error.message);
+      return 'File upload failed!';
+    }
   }
 
   async findAll() {
@@ -145,22 +151,34 @@ export class QuestionService {
   }
 
   async update(id: number, updateQuestionDto: UpdateQuestionDto) {
-    const checkAvailability = await this.findOne(id);
-    if (!checkAvailability) {
+    const question = await this.findOne(id);
+
+    if (!question) {
       throw new NotFoundException('No question found for this Question Id');
     }
 
+    const tagsArray = updateQuestionDto.tags
+      ? updateQuestionDto.tags.split(',').map((tag) => tag.trim())
+      : question.tags;
+
+    const payLoad = {
+      ...updateQuestionDto,
+      tags: tagsArray,
+    };
+
     try {
-      const updateQuestion = await this.questionRepository.update(
-        id,
-        updateQuestionDto,
-      );
-      if (!updateQuestion) {
+      const result = await this.questionRepository.update(id, payLoad);
+
+      if (result.affected === 0) {
         throw new MisdirectedException('Question update failed');
       }
-      return { updatedRows: updateQuestion.affected };
+
+      return { updatedRows: result.affected };
     } catch (error) {
-      console.log({ error });
+      console.error('Error updating question:', error);
+      throw new InternalServerErrorException(
+        'An unexpected error occurred while updating the question.',
+      );
     }
   }
 

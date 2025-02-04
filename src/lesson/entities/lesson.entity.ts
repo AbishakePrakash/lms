@@ -17,6 +17,9 @@ export class Lesson {
   @Column()
   description: string;
 
+  @Column({ default: '' })
+  video: string;
+
   @Column({ default: null })
   courseId: number;
 

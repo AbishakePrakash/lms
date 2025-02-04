@@ -27,9 +27,6 @@ export const uploadToS3 = async (
   mimetype: string,
   path: string,
 ) => {
-  //   console.log('aws1');
-
-  //   const bucketName = 'haloquant';
   const uniqueFilename = `${path}/${Date.now()}_${filename}`;
 
   const params = {
@@ -37,21 +34,17 @@ export const uploadToS3 = async (
     Key: uniqueFilename,
     Body: buffer,
     ContentType: mimetype,
+    ContentDisposition: 'inline', // Play in browser
   };
 
   try {
-    // console.log('aws2');
-
     const awsReturn = await s3.send(new PutObjectCommand(params));
-    console.log({ awsReturn });
+    // console.log({ awsReturn });
 
     const url = `https://${bucketName}.s3.amazonaws.com/${uniqueFilename}`;
-    // console.log('aws3');
 
     return url;
   } catch (error) {
-    // console.log('aws1`');
-
     console.error('Error uploading to S3:', error);
     throw error;
   }
