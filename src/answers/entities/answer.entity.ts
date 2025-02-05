@@ -1,9 +1,14 @@
+import { Comment } from 'src/comments/entities/comment.entity';
+import { Question } from 'src/question/entities/question.entity';
 import {
   Entity,
   Column,
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  ManyToOne,
+  OneToMany,
+  JoinColumn,
 } from 'typeorm';
 
 @Entity()

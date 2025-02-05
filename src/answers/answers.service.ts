@@ -104,7 +104,20 @@ export class AnswersService {
   }
 
   async findbyParent(parentId: number) {
-    return await this.answersRepository.findBy({ questionId: parentId });
+    try {
+      const answers = await this.answersRepository.findBy({
+        questionId: parentId,
+      });
+      if (answers.length === 0) {
+        throw new NotFoundException('No answers found for this questionId');
+      }
+      console.log(answers);
+
+      return answers;
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
   }
 
   async update(id: number, updateAnswerDto: UpdateAnswerDto) {

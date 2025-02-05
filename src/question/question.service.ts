@@ -69,12 +69,24 @@ export class QuestionService {
       }
 
       //Inject Answers
-
       const answers = await this.answersService.findbyParent(
         question.questionId,
       );
 
-      // Inject Comments
+      const allComments = await this.commentsService.findbyAnswer();
+
+      //Inject Comments for Answers
+      const answersWithComments = answers.map((answer) => {
+        const commentsForAnswer = allComments.filter(
+          (comment) => comment.parentId === answer.answerId,
+        );
+        return {
+          ...answer,
+          comments: commentsForAnswer,
+        };
+      });
+
+      // Inject Comments for Questions
       const fetchBody: FindByParentDto = {
         parentId: question.questionId,
         parentType: 'question',
@@ -83,8 +95,8 @@ export class QuestionService {
 
       const postData = {
         ...question,
-        answers: answers,
         comments: comments,
+        answers: answersWithComments,
       };
 
       return postData;
