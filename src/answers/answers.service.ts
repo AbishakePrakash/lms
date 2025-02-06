@@ -108,9 +108,7 @@ export class AnswersService {
       const answers = await this.answersRepository.findBy({
         questionId: parentId,
       });
-      if (answers.length === 0) {
-        throw new NotFoundException('No answers found for this questionId');
-      }
+
       console.log(answers);
 
       return answers;
