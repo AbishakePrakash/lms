@@ -129,10 +129,19 @@ export class CommentsService {
   }
 
   async findbyParent(payLoad: FindByParentDto) {
-    const comments = await this.commentRepository.findAndCount({
+    const comments = await this.commentRepository.find({
       where: {
         parentId: payLoad.parentId,
         parentType: payLoad.parentType,
+      },
+    });
+    return comments;
+  }
+
+  async findbyAnswer() {
+    const comments = await this.commentRepository.find({
+      where: {
+        parentType: 'answer',
       },
     });
     return comments;

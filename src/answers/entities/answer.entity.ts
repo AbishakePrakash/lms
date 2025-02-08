@@ -24,8 +24,9 @@ export class Answer {
   commentsCount: number;
 
   @Column({ default: 0 })
-  vote: number;
-
+  upvote: number;
+  @Column({ default: 0 })
+  downvote: number;
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;
 

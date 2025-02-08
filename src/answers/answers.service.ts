@@ -26,7 +26,7 @@ export class AnswersService {
   ) {}
 
   async create(createAnswerDto: CreateAnswerDto, user: Users) {
-    console.log({ user });
+    // console.log({ user });
 
     const payLoad = { ...createAnswerDto, email: user.email, userId: user.id };
     try {
@@ -104,7 +104,17 @@ export class AnswersService {
   }
 
   async findbyParent(parentId: number) {
-    return await this.answersRepository.findBy({ questionId: parentId });
+    try {
+      const answers = await this.answersRepository.findBy({
+        questionId: parentId,
+      });
+
+      console.log(answers);
+      return answers;
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
   }
 
   async update(id: number, updateAnswerDto: UpdateAnswerDto) {
@@ -151,7 +161,7 @@ export class AnswersService {
 
     try {
       const updatedRows = await this.answersRepository.update(id, {
-        vote: checkAvailability.vote + 1,
+        upvote: checkAvailability.upvote + 1,
       });
 
       // if (!updatedRows) {
@@ -169,7 +179,7 @@ export class AnswersService {
 
     try {
       const updatedRows = await this.answersRepository.update(id, {
-        vote: checkAvailability.vote - 1,
+        downvote: checkAvailability.downvote + 1,
       });
       // if (!updatedRows) {
 

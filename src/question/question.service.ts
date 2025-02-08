@@ -131,7 +131,19 @@ export class QuestionService {
         question.questionId,
       );
 
-      // Inject Comments
+      const allComments = await this.commentsService.findbyAnswer();
+      //Inject Comments for Answers
+      const answersWithComments = answers.map((answer) => {
+        const commentsForAnswer = allComments.filter(
+          (comment) => comment.parentId === answer.answerId,
+        );
+        return {
+          ...answer,
+          comments: commentsForAnswer,
+        };
+      });
+
+      // Inject Comments for Questions
       const fetchBody: FindByParentDto = {
         parentId: question.questionId,
         parentType: 'question',
@@ -140,7 +152,7 @@ export class QuestionService {
 
       const postData = {
         ...question,
-        answers: answers,
+        answers: answersWithComments,
         comments: comments,
       };
 
@@ -198,8 +210,8 @@ export class QuestionService {
       return { deletedRows: deleteQuestion.affected };
     } catch (error) {
       console.log({ error });
+      throw error;
     }
-    return `This action removes a #${id} question`;
   }
 
   async upVote(id: number) {
