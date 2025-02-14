@@ -14,6 +14,8 @@ import { LessonModule } from './lesson/lesson.module';
 import { QuizModule } from './quiz/quiz.module';
 import { McqModule } from './mcq/mcq.module';
 import { DoubtModule } from './doubt/doubt.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 
 @Module({
   imports: [
@@ -30,6 +32,10 @@ import { DoubtModule } from './doubt/doubt.module';
     QuizModule,
     McqModule,
     DoubtModule,
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'dist', 'utils'), // Adjust if needed
+      serveRoot: '/utils', // Access at http://localhost:3000/utils/yourfile.html
+    }),
   ],
   controllers: [AppController],
   providers: [AppService],

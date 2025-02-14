@@ -9,11 +9,22 @@ const passkey = process.env.MAIL_PASS;
 // console.log('Passkey:', passkey);
 
 // Create a transporter object
-var transporter = createTransport({
-  service: 'gmail',
+// var transporter = createTransport({
+//   service: 'gmail',
+//   auth: {
+//     user: sender,
+//     pass: passkey,
+//   },
+
+// });
+
+const transporter = createTransport({
+  host: 'email-smtp.us-east-1.amazonaws.com',
+  port: 465,
+  secure: true,
   auth: {
-    user: sender,
-    pass: passkey,
+    user: 'AKIAIFSQIBLZ5OZMZPSA',
+    pass: 'AqgSHYnHA7gOeveNkunLkjEEVFCr8SM+P+4e/ualuGdF',
   },
 });
 

@@ -9,7 +9,12 @@ import {
 import { Users } from 'src/users/entities/user.entity';
 import { Repository, UpdateResult } from 'typeorm';
 import { SignInCred } from 'src/users/dto/signin-user.dto';
-import { MailData, ReturnData } from '../utils/globalValues';
+import {
+  emailTemplate,
+  MailContents,
+  MailData,
+  ReturnData,
+} from '../utils/globalValues';
 import { JwtService } from '@nestjs/jwt';
 import triggerMaileEvent from '../utils/nodeMailer';
 import { OtpDto } from 'src/otp/dto/create-otp.dto';
@@ -86,8 +91,14 @@ export class AuthService {
   async forgotPassword(email: string) {
     const returnData = new ReturnData();
     const mailData = new MailData();
+    const currentDate = new Date();
+    const formattedDate = currentDate.toLocaleDateString('en-US', {
+      month: 'short', // "Feb"
+      day: '2-digit', // "12"
+      year: 'numeric', // "2025"
+    });
     var processLog: object;
-    const sender = process.env.MAIL_SENDER;
+    const sender = '"HaloQuant " <no-reply@haloquant.com>';
     var targetUser: Users;
 
     try {
@@ -119,10 +130,18 @@ export class AuthService {
       processLog = { ...processLog, saveOtp: 'Otp saved to DB' };
 
       try {
+        const mailContents: MailContents = {
+          date: formattedDate,
+          username: targetUser.username,
+          task: 'reset your Password',
+          validity: '5 minutes',
+          otp: otp,
+        };
+
         mailData.from = sender;
         mailData.to = email;
         mailData.subject = 'Reset Password';
-        mailData.text = `The OTP to reset your CRM Account password is ${otp}`;
+        mailData.html = emailTemplate(mailContents);
 
         await this.sendMail(mailData);
         processLog = { ...processLog, sendOtp: 'OTP sent to User' };

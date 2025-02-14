@@ -17,9 +17,17 @@ import { Repository } from 'typeorm';
 import { OtpService } from 'src/otp/otp.service';
 import { OtpDto } from 'src/otp/dto/create-otp.dto';
 import { VerifyAccountPayload } from 'src/otp/dto/verifyAccount.dto';
-import { MailData, ReturnData } from 'src/utils/globalValues';
+import {
+  emailTemplate,
+  MailContents,
+  MailData,
+  ReturnData,
+} from 'src/utils/globalValues';
 import triggerMaileEvent from 'src/utils/nodeMailer';
 import { uploadToS3 } from 'src/utils/awsBucket';
+
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class UsersService {
@@ -57,10 +65,24 @@ export class UsersService {
   async create(createUserDto: CreateUserDto) {
     const returnData = new ReturnData();
     const mailData = new MailData();
-    const sender = process.env.MAIL_SENDER;
+    const sender = '"HaloQuant " <no-reply@haloquant.com>';
     const saltRounds = process.env.SALT_ROUNDS;
+    const currentDate = new Date();
+    const formattedDate = currentDate.toLocaleDateString('en-US', {
+      month: 'short', // "Feb"
+      day: '2-digit', // "12"
+      year: 'numeric', // "2025"
+    });
+
     // console.log({ saltRounds });
     const otp = this.generateSixDigitNumber();
+
+    const otpData: OtpDto = {
+      userId: 11,
+      email: createUserDto.email,
+      otp: otp,
+      service: 'VerifyAccount',
+    };
 
     createUserDto.isActive = false;
 
@@ -87,7 +109,7 @@ export class UsersService {
       const { password, ...user } = data;
 
       const otpData: OtpDto = {
-        userId: user.id,
+        userId: user.id || 11,
         email: createUserDto.email,
         otp: otp,
         service: 'VerifyAccount',
@@ -99,11 +121,18 @@ export class UsersService {
           throw new InternalServerErrorException('OTP saving failed');
         }
         try {
+          const mailContents: MailContents = {
+            date: formattedDate,
+            username: createUserDto.username,
+            task: 'verify your Account',
+            validity: '5 minutes',
+            otp: otp,
+          };
+
           mailData.from = sender;
           mailData.to = createUserDto.email;
           mailData.subject = 'Verify Account';
-          mailData.text = `The OTP to verify your CRM Account is ${otp}`;
-
+          mailData.html = emailTemplate(mailContents);
           await this.sendMail(mailData);
         } catch (error) {
           console.log({ error });
