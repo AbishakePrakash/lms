@@ -1,13 +1,3 @@
-import {
-  BadRequestException,
-  ForbiddenException,
-  Inject,
-  Injectable,
-  InternalServerErrorException,
-  MisdirectedException,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -28,6 +18,16 @@ import { uploadToS3 } from 'src/utils/awsBucket';
 
 import * as fs from 'fs';
 import * as path from 'path';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Inject,
+  Injectable,
+  InternalServerErrorException,
+  MisdirectedException,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 
 @Injectable()
 export class UsersService {
@@ -164,7 +164,7 @@ export class UsersService {
       const s3Url = await uploadToS3(buffer, originalname, mimetype, 'profile');
 
       if (!s3Url) {
-        throw new MisdirectedException('No url returned from S3');
+        throw new InternalServerErrorException('No url returned from S3');
       }
       console.log('File uploaded:', s3Url);
 
@@ -202,9 +202,7 @@ export class UsersService {
   }
 
   async assign(id: number) {
-    const updateUserDto: UpdateUserDto = {
-      role: 'Instructor',
-    };
+    const updateUserDto: UpdateUserDto = { role: 'Instructor' };
 
     const verifyUser = await this.findOne(id);
 
