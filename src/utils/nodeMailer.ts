@@ -2,8 +2,10 @@
 import { createTransport } from 'nodemailer'; // Import specific member
 import 'dotenv/config';
 
-const sender = process.env.MAIL_SENDER;
-const passkey = process.env.MAIL_PASS;
+const host = process.env.AWS_MAIL_HOST;
+const port = process.env.AWS_MAIL_PORT || 465;
+const sender = process.env.AWS_MAIL_SENDER;
+const passkey = process.env.AWS_MAIL_PASS;
 
 // console.log('Sender:', sender);
 // console.log('Passkey:', passkey);
@@ -19,12 +21,12 @@ const passkey = process.env.MAIL_PASS;
 // });
 
 const transporter = createTransport({
-  host: 'email-smtp.us-east-1.amazonaws.com',
-  port: 465,
+  host: host,
+  port: Number(port),
   secure: true,
   auth: {
-    user: 'AKIAIFSQIBLZ5OZMZPSA',
-    pass: 'AqgSHYnHA7gOeveNkunLkjEEVFCr8SM+P+4e/ualuGdF',
+    user: sender,
+    pass: passkey,
   },
 });
 
