@@ -39,7 +39,6 @@ export class UsersController {
   @ApiConsumes('multipart/form-data') // Specifies the content type for the request
   @ApiBody({
     description: 'Upload an image file',
-    type: 'multipart/form-data',
     required: true,
     schema: {
       type: 'object',
