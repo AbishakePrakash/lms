@@ -44,8 +44,7 @@ export class AuthService {
 
     const user = await this.usersService.findOneByEmail(signinCred.email);
     if (!user) {
-      returnData.error = 'User not found';
-      return returnData;
+      throw new UnauthorizedException('User not found');
     }
 
     if (user.isActive === false) {
