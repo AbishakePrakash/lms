@@ -1,6 +1,6 @@
 class ReturnData {
   message: string;
-  error: string;
+  error: boolean;
   value: any;
 }
 
