@@ -16,6 +16,7 @@ import { UpdateQuestionDto } from 'src/question/dto/update-question.dto';
 import { CreateAnswerDto } from 'src/answers/dto/create-answer.dto';
 import { FindByParentDto } from './dto/findByParent.dto';
 import { Users } from 'src/users/entities/user.entity';
+import { ReturnData } from 'src/utils/globalValues';
 
 @Injectable()
 export class CommentsService {
@@ -28,22 +29,33 @@ export class CommentsService {
     private readonly questionRepository: Repository<Question>,
   ) {}
   async create(createCommentDto: CreateCommentDto, user: Users) {
+    const returnData = new ReturnData();
     console.log({ user });
 
     const payLoad = { ...createCommentDto, email: user.email, userId: user.id };
     try {
       const comments = await this.commentRepository.save(payLoad);
       if (!comments) {
-        throw new MisdirectedException('Comment not posted');
+        returnData.error = true;
+        returnData.message = 'Comment not posted';
+        return returnData;
+        // throw new MisdirectedException('Comment not posted');
       }
       if (createCommentDto.parentType === 'question') {
         await this.updateQuestionCount(createCommentDto.parentId, 'create');
       } else if (createCommentDto.parentType === 'answer') {
         await this.updateAnswerCount(createCommentDto.parentId, 'create');
       } else {
-        throw new BadRequestException('Invalid parentType');
+        returnData.error = true;
+        returnData.message = 'Invalid parentType';
+        return returnData;
+        // throw new BadRequestException('Invalid parentType');
       }
-      return comments;
+      returnData.error = false;
+      returnData.message = 'Comment stored Successfully';
+      returnData.value = comments;
+      return returnData;
+      // return comments;
     } catch (error) {
       console.log({ error });
       throw error;
@@ -51,13 +63,10 @@ export class CommentsService {
   }
 
   async updateAnswerCount(id: number, process: string) {
+    const returnData = new ReturnData();
     const targetAnswer = await this.answerRepository.findOneBy({
       answerId: id,
     });
-
-    if (!targetAnswer) {
-      throw new NotFoundException('No answer found for this AnswerId');
-    }
 
     try {
       const updatedAnswer = await this.answerRepository.update(
@@ -70,7 +79,11 @@ export class CommentsService {
         },
       );
       if (!updatedAnswer) {
-        throw new NotFoundException('Answer not found');
+        returnData.error = true;
+        returnData.message = 'Answer count not updated';
+        return returnData;
+
+        // throw new NotFoundException('Answer not found');
       }
     } catch (error) {
       console.log({ error });
@@ -79,13 +92,12 @@ export class CommentsService {
   }
 
   async updateQuestionCount(id: number, process: string) {
+    const returnData = new ReturnData();
+
     const targetQuestion = await this.questionRepository.findOneBy({
       questionId: id,
     });
 
-    if (!targetQuestion) {
-      throw new NotFoundException('No question found for this questionId');
-    }
     try {
       const updatedQuestion = await this.questionRepository.update(id, {
         commentsCount:
@@ -94,7 +106,10 @@ export class CommentsService {
             : targetQuestion.commentsCount - 1,
       });
       if (!updatedQuestion) {
-        throw new NotFoundException('Question not found');
+        returnData.error = true;
+        returnData.message = 'Question count not updated';
+        return returnData;
+        // throw new NotFoundException('Question not found');
       }
     } catch (error) {
       console.log({ error });
@@ -103,12 +118,21 @@ export class CommentsService {
   }
 
   async findAll() {
+    const returnData = new ReturnData();
     try {
       const comments = await this.commentRepository.find();
       if (comments.length === 0) {
-        throw new NotFoundException('No comments found');
+        returnData.error = true;
+        returnData.message = 'No Comments found';
+        returnData.value = comments;
+        return returnData;
+        // throw new NotFoundException('No comments found');
       }
-      return comments;
+      returnData.error = false;
+      returnData.message = 'Comments fetched Successfully';
+      returnData.value = comments;
+      return returnData;
+      // return comments;
     } catch (error) {
       console.log({ error });
       throw error;
@@ -116,12 +140,21 @@ export class CommentsService {
   }
 
   async findOne(id: number) {
+    const returnData = new ReturnData();
+
     try {
       const comment = await this.commentRepository.findOneBy({ commentId: id });
       if (!comment) {
-        throw new NotFoundException('No comment found for this ID');
+        returnData.error = true;
+        returnData.message = 'No comment found for this ID';
+        return returnData;
+        // throw new NotFoundException('No comment found for this ID');
       }
-      return comment;
+      returnData.error = false;
+      returnData.message = 'Comment fetched Successfully';
+      returnData.value = comment;
+      return returnData;
+      // return comment;
     } catch (error) {
       console.log({ error });
       throw error;
@@ -138,6 +171,7 @@ export class CommentsService {
     return comments;
   }
 
+  //  Check - where it got used
   async findbyAnswer() {
     const comments = await this.commentRepository.find({
       where: {
@@ -148,10 +182,16 @@ export class CommentsService {
   }
 
   async update(id: number, updateCommentDto: UpdateCommentDto) {
-    const checkAvailability = await this.findOne(id);
+    const returnData = new ReturnData();
 
+    const checkAvailability = await this.commentRepository.findOneBy({
+      commentId: id,
+    });
     if (!checkAvailability) {
-      throw new NotFoundException('No comment found for this Comment Id');
+      returnData.error = true;
+      returnData.message = 'No comment found for this comment Id';
+      return returnData;
+      // throw new NotFoundException('No comment found for this Comment Id');
     }
     try {
       const updatedComment = await this.commentRepository.update(
@@ -159,9 +199,16 @@ export class CommentsService {
         updateCommentDto,
       );
       if (!updatedComment) {
-        throw new MisdirectedException('Comment not updated');
+        returnData.error = true;
+        returnData.message = 'Comment not updated';
+        return returnData;
+        // throw new MisdirectedException('Comment not updated');
       }
-      return { updatedRows: updatedComment.affected };
+      returnData.error = false;
+      returnData.message = 'Comment updated Successfully';
+      returnData.value = { updatedRows: updatedComment.affected };
+      return returnData;
+      // return { updatedRows: updatedComment.affected };
     } catch (error) {
       console.log({ error });
       return error;
@@ -169,10 +216,16 @@ export class CommentsService {
   }
 
   async remove(id: number) {
-    const checkAvailability = await this.findOne(id);
+    const returnData = new ReturnData();
 
+    const checkAvailability = await this.commentRepository.findOneBy({
+      commentId: id,
+    });
     if (!checkAvailability) {
-      throw new NotFoundException('No comment found for this Comment Id');
+      returnData.error = true;
+      returnData.message = 'No comment found for this comment Id';
+      return returnData;
+      // throw new NotFoundException('No comment found for this Comment Id');
     }
 
     try {
@@ -180,16 +233,26 @@ export class CommentsService {
         commentId: id,
       });
       if (!deletedComment) {
-        throw new MisdirectedException('Comment not deleted');
+        returnData.error = true;
+        returnData.message = 'Comment not deleted';
+        return returnData;
+        // throw new MisdirectedException('Comment not deleted');
       }
       if (checkAvailability.parentType === 'question') {
         await this.updateQuestionCount(checkAvailability.parentId, 'delete');
       } else if (checkAvailability.parentType === 'answer') {
         await this.updateAnswerCount(checkAvailability.parentId, 'delete');
       } else {
-        throw new BadRequestException('Invalid parentType');
+        returnData.error = true;
+        returnData.message = 'Invalid parentType';
+        return returnData;
+        // throw new BadRequestException('Invalid parentType');
       }
-      return { deletedRows: deletedComment.affected };
+      returnData.error = false;
+      returnData.message = 'Comment deleted Successfully';
+      returnData.value = { updatedRows: deletedComment.affected };
+      return returnData;
+      // return { deletedRows: deletedComment.affected };
     } catch (error) {
       console.log({ error });
       throw error;
@@ -197,10 +260,15 @@ export class CommentsService {
   }
 
   async likes(id: number) {
-    const checkAvailability = await this.findOne(id);
-
+    const returnData = new ReturnData();
+    const checkAvailability = await this.commentRepository.findOneBy({
+      commentId: id,
+    });
     if (!checkAvailability) {
-      throw new NotFoundException('No comment found for this Comment Id');
+      returnData.error = true;
+      returnData.message = 'No comment found for this comment Id';
+      return returnData;
+      // throw new NotFoundException('No comment found for this Comment Id');
     }
 
     try {
@@ -214,16 +282,16 @@ export class CommentsService {
     }
   }
 
-  async commentsCount(parentId: number) {
-    try {
-      const commentsCount = await this.commentRepository.countBy({ parentId });
-      if (commentsCount === 0) {
-        throw new NotFoundException('No comments found');
-      }
-      return commentsCount;
-    } catch (error) {
-      console.log({ error });
-      throw error;
-    }
-  }
+  // async commentsCount(parentId: number) {
+  //   try {
+  //     const commentsCount = await this.commentRepository.countBy({ parentId });
+  //     if (commentsCount === 0) {
+  //       // throw new NotFoundException('No comments found');
+  //     }
+  //     return commentsCount;
+  //   } catch (error) {
+  //     console.log({ error });
+  //     throw error;
+  //   }
+  // }
 }

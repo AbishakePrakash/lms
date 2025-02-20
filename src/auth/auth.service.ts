@@ -65,20 +65,18 @@ export class AuthService {
   }
 
   async sendMail(mailData: MailData) {
-    const returnData = new ReturnData();
     try {
       const data = await triggerMaileEvent(mailData);
       console.log({ data });
       const status = data.split(' ')[0];
       if (status === '250') {
-        returnData.message = 'Mail sent successfully';
-        returnData.value = data;
-        // returnData.value = parseInt(status);
-        return returnData;
+        return data;
+      } else {
+        return null;
       }
     } catch (error) {
       console.log('Error sending mail: ', error);
-      throw new Error('Mail sending failed');
+      throw error;
     }
   }
 
@@ -98,15 +96,12 @@ export class AuthService {
     });
     var processLog: object;
     const sender = '"HaloQuant " <no-reply@haloquant.com>';
-    var targetUser: Users;
 
-    try {
-      targetUser = await this.usersService.findOneByEmail(email);
-      // console.log({ targetUser });
-    } catch (error) {
-      console.log('error: ', error);
-
-      throw new NotFoundException('Email not found');
+    const targetUser = await this.usersService.findOneByEmail(email);
+    if (!targetUser) {
+      returnData.error = true;
+      returnData.message = 'No User found for this Email';
+      return returnData;
     }
 
     processLog = { checkUser: 'User Found' };
@@ -126,6 +121,11 @@ export class AuthService {
 
     try {
       const saveOtp = await this.otpService.saveOtp(otpData);
+      if (!saveOtp) {
+        returnData.error = true;
+        returnData.message = "OTP didn't saved to DB";
+        return returnData;
+      }
       processLog = { ...processLog, saveOtp: 'Otp saved to DB' };
 
       try {
@@ -142,13 +142,20 @@ export class AuthService {
         mailData.subject = 'Reset Password';
         mailData.html = emailTemplate(mailContents);
 
-        await this.sendMail(mailData);
+        const mailResponse = await this.sendMail(mailData);
+        if (!mailResponse) {
+          returnData.error = true;
+          returnData.message = "OTP didn't sent to user";
+          return returnData;
+        }
         processLog = { ...processLog, sendOtp: 'OTP sent to User' };
       } catch (error) {
-        throw new Error("OTP didn't sent to user");
+        // console.log(error);
+        throw error;
       }
     } catch (error) {
-      throw new Error("OTP didn't saved to DB");
+      // console.log(error);
+      throw error;
     }
 
     returnData.message = 'Success';
@@ -174,7 +181,10 @@ export class AuthService {
     const user = await this.usersService.findOneByEmail(otpPayload.email);
 
     if (data.otp !== otpPayload.otp) {
-      throw new UnauthorizedException('Wrong Otp');
+      returnData.error = true;
+      returnData.message = 'Incorrect OTP';
+      return returnData;
+      // throw new UnauthorizedException('Wrong Otp');
     }
 
     processLog = { otpVerification: 'OTP Verified' };
@@ -192,16 +202,22 @@ export class AuthService {
     console.log({ diff });
 
     if (diff > 300000) {
-      throw new UnauthorizedException('OTP expired');
+      returnData.error = true;
+      returnData.message = 'OTP expired';
+      return returnData;
+      // throw new UnauthorizedException('OTP expired');
     }
     processLog = { ...processLog, otpValidation: 'OTP valid' };
 
     // console.log({ otpPayload });
 
     if (otpPayload.password !== otpPayload.confirmPassword) {
-      throw new BadRequestException(
-        'Password and Confirm Passwords must be same',
-      );
+      returnData.error = true;
+      returnData.message = 'Password and Confirm Passwords must be same';
+      return returnData;
+      // throw new BadRequestException(
+      //   'Password and Confirm Passwords must be same',
+      // );
     } else {
       processLog = { ...processLog, passwordConfirmation: true };
 
