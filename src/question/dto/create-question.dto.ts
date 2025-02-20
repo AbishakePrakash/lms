@@ -23,6 +23,7 @@ export class CreateQuestionDto {
   @ApiProperty({
     description: 'Tags related to the question',
     example: '["sql", "rdbms", "database"]',
+    required: false,
   })
-  tags: string;
+  tags?: string;
 }

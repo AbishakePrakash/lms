@@ -35,21 +35,25 @@ export class QuestionController {
 
   @Post()
   @UseGuards(AuthGuard)
-  @UseInterceptors(FileInterceptor('file'))
+  // @UseInterceptors(FileInterceptor('file'))
   @ApiConsumes('multipart/form-data') // Specifies the content type for the request
   @ApiBody({
-    description: 'Upload an image file with question details',
-    type: CreateQuestionWithFileDto, // Uses the DTO directly
+    // description: 'Upload an image file with question details',
+    type: CreateQuestionDto, // Uses the DTO directly
   })
   create(
-    @UploadedFile() file: Express.Multer.File,
+    // @UploadedFile() file: Express.Multer.File,
     @Body() createQuestionDto: CreateQuestionDto,
     @Request() req,
   ) {
-    if (!file) {
-      throw new BadRequestException('No file uploaded');
-    }
-    return this.questionService.create(createQuestionDto, req.user, file);
+    // if (!file) {
+    //   throw new BadRequestException('No file uploaded');
+    // }
+    return this.questionService.create(
+      createQuestionDto,
+      req.user,
+      //  file
+    );
   }
 
   @Get()

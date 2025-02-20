@@ -29,7 +29,7 @@ export class Question {
   @Column({ default: 0 })
   commentsCount: number;
 
-  @Column('text', { array: true, default: null })
+  @Column('text', { array: true, default: null, nullable: true })
   tags: string[];
 
   @Column({ default: 0 })
