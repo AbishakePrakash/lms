@@ -33,7 +33,7 @@ export class UsersController {
     return this.usersService.create(createUserDto);
   }
 
-  @Post('image/:id')
+  @Post('image')
   @UseGuards(AuthGuard)
   @UseInterceptors(FileInterceptor('file'))
   @ApiConsumes('multipart/form-data') // Specifies the content type for the request

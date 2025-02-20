@@ -152,6 +152,8 @@ export class UsersService {
   }
 
   async uploadFile(file: Express.Multer.File, user: Users) {
+    const path = process.env.AWS_BUCKET_PATH;
+
     try {
       const { buffer, originalname, mimetype } = file;
 
@@ -161,7 +163,12 @@ export class UsersService {
       //   mimetype: mimetype,
       // });
 
-      const s3Url = await uploadToS3(buffer, originalname, mimetype, 'profile');
+      const s3Url = await uploadToS3(
+        buffer,
+        originalname,
+        mimetype,
+        `${path}/profile`,
+      );
 
       if (!s3Url) {
         throw new InternalServerErrorException('No url returned from S3');
@@ -238,6 +245,7 @@ export class UsersService {
         'role',
         'createdAt',
         'updatedAt',
+        'profilePicture',
       ],
     });
     if (data.length === 0) {

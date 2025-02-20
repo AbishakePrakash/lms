@@ -57,6 +57,9 @@ export class QuestionService {
     user: Users,
     file: Express.Multer.File,
   ) {
+    const path = process.env.AWS_BUCKET_PATH;
+    // console.log({ path });
+
     // HTML sanitizing
     const sanitizedHtml = purifyHtml(createQuestionDto.richText);
     // console.log({ createQuestionDto });
@@ -65,12 +68,17 @@ export class QuestionService {
     createQuestionDto.richText = sanitizedHtml;
 
     const { tags, ...newDto } = createQuestionDto;
-    console.log({ newDto });
+    // console.log({ newDto });
 
     // Image upload to S3
     try {
       const { buffer, originalname, mimetype } = file;
-      const s3Url = await uploadToS3(buffer, originalname, mimetype, 'profile');
+      const s3Url = await uploadToS3(
+        buffer,
+        originalname,
+        mimetype,
+        `${path}/question`,
+      );
 
       if (!s3Url) {
         throw new MisdirectedException('No url returned from S3');
