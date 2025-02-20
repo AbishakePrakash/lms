@@ -12,7 +12,7 @@ export class Users {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({ nullable: true })
   username: string;
 
   @Column()
@@ -21,10 +21,10 @@ export class Users {
   @Column({ default: 'Student' })
   role: string;
 
-  @Column()
+  @Column({ nullable: true })
   phone: string;
 
-  @Column()
+  @Column({ nullable: true })
   age: string;
 
   @Column({ default: false })
