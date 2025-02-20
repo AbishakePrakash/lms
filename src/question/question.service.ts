@@ -55,7 +55,7 @@ export class QuestionService {
   async create(
     createQuestionDto: CreateQuestionDto,
     user: Users,
-    // file: Express.Multer.File,
+    file: Express.Multer.File,
   ) {
     const path = process.env.AWS_BUCKET_PATH;
     // console.log({ path });
@@ -72,25 +72,62 @@ export class QuestionService {
 
     // Image upload to S3
     try {
-      // const { buffer, originalname, mimetype } = file;
-      // const s3Url = await uploadToS3(
-      //   buffer,
-      //   originalname,
-      //   mimetype,
-      //   `${path}/question`,
-      // );
+      const { buffer, originalname, mimetype } = file;
+      const s3Url = await uploadToS3(
+        buffer,
+        originalname,
+        mimetype,
+        `${path}/question`,
+      );
 
-      // if (!s3Url) {
-      //   throw new MisdirectedException('No url returned from S3');
-      // }
-      // console.log('File uploaded:', s3Url);
+      if (!s3Url) {
+        throw new MisdirectedException('No url returned from S3');
+      }
+      console.log('File uploaded:', s3Url);
 
       // Update sanitized HTML & refImage link
       const payLoad = {
         ...newDto,
         email: user.email,
         userId: user.id,
-        // refImage: s3Url,
+        refImage: s3Url,
+        tags: parsifiedTags,
+      };
+
+      // Saving question to DB
+      try {
+        const question = await this.questionRepository.save(payLoad);
+        if (!question) {
+          throw new MisdirectedException('Question posting failed');
+        }
+        return question;
+      } catch (error) {
+        console.log({ error });
+        return error;
+      }
+    } catch (error) {
+      console.error('Error uploading file:', error.message);
+      return 'File upload failed!';
+    }
+  }
+
+  async createv2(
+    createQuestionDto: CreateQuestionDto,
+    user: Users,
+    // file: Express.Multer.File,
+  ) {
+    // HTML sanitizing
+    const sanitizedHtml = purifyHtml(createQuestionDto.richText);
+    const parsifiedTags = createQuestionDto.tags.split(',');
+
+    createQuestionDto.richText = sanitizedHtml;
+    const { tags, ...newDto } = createQuestionDto;
+
+    try {
+      const payLoad = {
+        ...newDto,
+        email: user.email,
+        userId: user.id,
         tags: parsifiedTags,
       };
 

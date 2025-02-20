@@ -33,26 +33,45 @@ export class QuestionController {
   //   return this.questionService.create(createQuestionDto, req.user);
   // }
 
+  // @Post()
+  // @UseGuards(AuthGuard)
+  // @UseInterceptors(FileInterceptor('file'))
+  // @ApiConsumes('multipart/form-data') // Specifies the content type for the request
+  // @ApiBody({
+  //   description: 'Upload an image file with question details',
+  //   type: CreateQuestionWithFileDto, // Uses the DTO directly
+  // })
+  // create(
+  //   @UploadedFile() file: Express.Multer.File,
+  //   @Body() createQuestionDto: CreateQuestionDto,
+  //   @Request() req,
+  // ) {
+  //   if (!file) {
+  //     throw new BadRequestException('No file uploaded');
+  //   }
+  //   return this.questionService.create(createQuestionDto, req.user, file);
+  // }
+
   @Post()
   @UseGuards(AuthGuard)
-  // @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file'))
   @ApiConsumes('multipart/form-data') // Specifies the content type for the request
   @ApiBody({
-    // description: 'Upload an image file with question details',
+    description: 'Upload an image file with question details',
     type: CreateQuestionDto, // Uses the DTO directly
   })
-  create(
-    // @UploadedFile() file: Express.Multer.File,
+  createv2(
+    @UploadedFile() file: Express.Multer.File,
     @Body() createQuestionDto: CreateQuestionDto,
     @Request() req,
   ) {
     // if (!file) {
     //   throw new BadRequestException('No file uploaded');
     // }
-    return this.questionService.create(
+    return this.questionService.createv2(
       createQuestionDto,
       req.user,
-      //  file
+      // file
     );
   }
 

@@ -29,6 +29,12 @@ export class Question {
   @Column({ default: 0 })
   commentsCount: number;
 
+  @Column({ default: '' })
+  richText: string;
+
+  @Column({ default: '' })
+  refImage: string;
+
   @Column('text', { array: true, default: null, nullable: true })
   tags: string[];
 
