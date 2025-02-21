@@ -13,6 +13,9 @@ import { Repository } from 'typeorm';
 import { CourseService } from 'src/course/course.service';
 import { Users } from 'src/users/entities/user.entity';
 import { LessonService } from 'src/lesson/lesson.service';
+import { ReturnData } from 'src/utils/globalValues';
+import { Lesson } from 'src/lesson/entities/lesson.entity';
+import { Course } from 'src/course/entities/course.entity';
 
 @Injectable()
 export class ChapterService {
@@ -26,11 +29,13 @@ export class ChapterService {
   ) {}
 
   async ownership(courseId: number, authorId: number) {
-    const course = await this.courseService.findOne(courseId);
+    const returnData: ReturnData = await this.courseService.findOne(courseId);
+    const course: Course = returnData.value;
     return course.authorId === authorId;
   }
 
   async create(createChapterDto: CreateChapterDto, user: Users) {
+    const returnData = new ReturnData();
     const previousChapter = await this.chapterRepository.findOne({
       where: {
         courseId: createChapterDto.courseId,
@@ -44,27 +49,43 @@ export class ChapterService {
       try {
         const chapter = await this.chapterRepository.save(createChapterDto);
         if (!chapter) {
-          throw new MisdirectedException('Chapter not created');
+          returnData.error = true;
+          returnData.message = 'Chapter not created';
+          return returnData;
+          // throw new MisdirectedException('Chapter not created');
         }
-        return chapter;
+        returnData.error = false;
+        returnData.message = 'Success';
+        returnData.value = chapter;
+        return returnData;
       } catch (error) {
         console.log({ error });
         throw error;
       }
     } else {
-      throw new UnauthorizedException(
-        'Need Author Access to perform this Action',
-      );
+      returnData.error = true;
+      returnData.message = 'Need Author Access to perform this Action';
+      return returnData;
+      // throw new UnauthorizedException(
+      //   'Need Author Access to perform this Action',
+      // );
     }
   }
 
   async findAll() {
+    const returnData = new ReturnData();
     try {
       const chapters = await this.chapterRepository.find();
       if (chapters.length === 0) {
-        throw new NotFoundException('No Chapters found');
+        returnData.error = true;
+        returnData.message = 'No Chapters found';
+        return returnData;
+        // throw new NotFoundException('No Chapters found');
       }
-      return chapters;
+      returnData.error = false;
+      returnData.message = 'Success';
+      returnData.value = chapters;
+      return returnData;
     } catch (error) {
       console.log({ error });
       throw error;
@@ -72,13 +93,20 @@ export class ChapterService {
   }
 
   async findOne(id: number) {
+    const returnData = new ReturnData();
     try {
       const chapter = await this.chapterRepository.findOneBy({ chapterId: id });
       if (!chapter) {
-        throw new NotFoundException('No Chapter found for this Chapter Id');
+        returnData.error = true;
+        returnData.message = 'No Chapter found for this Chapter Id';
+        return returnData;
+        // throw new NotFoundException('No Chapter found for this Chapter Id');
       }
       const lessons = await this.lessonService.findByChapter(id);
-      return { ...chapter, lessons: lessons };
+      returnData.error = false;
+      returnData.message = 'Success';
+      returnData.value = { ...chapter, lessons: lessons };
+      return returnData;
     } catch (error) {
       console.log({ error });
       return error;
@@ -86,6 +114,7 @@ export class ChapterService {
   }
 
   async update(id: number, updateChapterDto: UpdateChapterDto, user: Users) {
+    const returnData = new ReturnData();
     const chapter: Chapter = await this.findOne(id);
     const isAuthor = await this.ownership(chapter.courseId, user.id);
 
@@ -96,38 +125,57 @@ export class ChapterService {
           updateChapterDto,
         );
         if (!updatedChapter) {
-          throw new MisdirectedException('Chapter not updated');
+          returnData.error = true;
+          returnData.message = 'Chapter not updated';
+          return returnData;
+          // throw new MisdirectedException('Chapter not updated');
         }
-        return { updatedRows: updatedChapter.affected };
+        returnData.error = false;
+        returnData.message = 'Success';
+        returnData.value = { updatedRows: updatedChapter.affected };
+        return returnData;
       } catch (error) {
         console.log({ error });
         throw error;
       }
     } else {
-      throw new UnauthorizedException(
-        'Need Author Access to perform this Action',
-      );
+      returnData.error = true;
+      returnData.message = 'Need Author Access to perform this Action';
+      return returnData;
+      // throw new UnauthorizedException(
+      //   'Need Author Access to perform this Action',
+      // );
     }
   }
 
   async remove(id: number, user: Users) {
+    const returnData = new ReturnData();
     const chapter: Chapter = await this.findOne(id);
     const isAuthor = await this.ownership(chapter.courseId, user.id);
     if (isAuthor) {
       try {
         const deletedChapter = await this.chapterRepository.delete(id);
         if (!deletedChapter) {
-          throw new MisdirectedException('Chapter not deleted');
+          returnData.error = true;
+          returnData.message = 'Chapter not deleted';
+          return returnData;
+          // throw new MisdirectedException('Chapter not deleted');
         }
-        return { deletedRows: deletedChapter.affected };
+        returnData.error = false;
+        returnData.message = 'Successs';
+        returnData.value = { deletedRows: deletedChapter.affected };
+        return returnData;
       } catch (error) {
         console.log({ error });
         throw error;
       }
     } else {
-      throw new UnauthorizedException(
-        'Need Author Access to perform this Action',
-      );
+      returnData.error = true;
+      returnData.message = 'Need Author Access to perform this Action';
+      return returnData;
+      // throw new UnauthorizedException(
+      //   'Need Author Access to perform this Action',
+      // );
     }
   }
 }

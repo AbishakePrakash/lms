@@ -93,6 +93,7 @@ export class LessonService {
     }
   }
 
+  // helper
   async findByChapter(id: number) {
     try {
       const lessons = await this.lessonRepository.findBy({ chapterId: id });

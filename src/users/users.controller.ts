@@ -21,6 +21,7 @@ import { ApiBearerAuth, ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { AdminGuard } from 'src/auth/guard/adminGuard';
 import { AuthGuard } from 'src/auth/guard/authguard';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { ReturnData } from 'src/utils/globalValues';
 
 @ApiBearerAuth('access-token')
 @ApiTags('Users')
@@ -51,8 +52,12 @@ export class UsersController {
     },
   })
   async uploadFile(@UploadedFile() file: Express.Multer.File, @Request() req) {
+    const returnData = new ReturnData();
     if (!file) {
-      throw new BadRequestException('No file uploaded');
+      returnData.error = true;
+      returnData.message = 'No file uploaded';
+      return returnData;
+      // throw new BadRequestException('No file uploaded');
     }
     return await this.usersService.uploadFile(file, req.user);
   }

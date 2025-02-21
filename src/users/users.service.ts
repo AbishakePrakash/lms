@@ -46,13 +46,17 @@ export class UsersService {
       const data = await triggerMaileEvent(mailData);
       const status = data.split(' ')[0];
       if (status === '250') {
+        returnData.error = false;
         returnData.message = 'Mail sent successfully';
         returnData.value = data;
         // returnData.value = parseInt(status);
       }
     } catch (error) {
       console.log('Error sending mail: ', error);
-      throw new Error('Mail sending failed');
+      returnData.error = true;
+      returnData.message = 'Mail sending failed';
+      return returnData;
+      // throw new Error('Mail sending failed');
     }
     return returnData;
   }
@@ -65,7 +69,8 @@ export class UsersService {
   async create(createUserDto: CreateUserDto) {
     const returnData = new ReturnData();
     const mailData = new MailData();
-    const sender = '"HaloQuant " <no-reply@haloquant.com>';
+    createUserDto.isActive = false;
+    const sender = process.env.HQ_SENDER;
     const saltRounds = process.env.SALT_ROUNDS;
     const currentDate = new Date();
     const formattedDate = currentDate.toLocaleDateString('en-US', {
@@ -77,22 +82,16 @@ export class UsersService {
     // console.log({ saltRounds });
     const otp = this.generateSixDigitNumber();
 
-    const otpData: OtpDto = {
-      userId: 11,
-      email: createUserDto.email,
-      otp: otp,
-      service: 'VerifyAccount',
-    };
-
-    createUserDto.isActive = false;
-
     //Check duplicate
     const duplicate = await this.usersRepo.findOneBy({
       email: createUserDto.email,
     });
 
     if (duplicate) {
-      throw new BadRequestException('Email already exists');
+      returnData.error = true;
+      returnData.message = 'Email already exists';
+      return returnData;
+      // throw new BadRequestException('Email already exists');
     }
 
     await bcrypt
@@ -104,12 +103,15 @@ export class UsersService {
     try {
       const data = await this.usersRepo.save(createUserDto);
       if (!data) {
-        throw new InternalServerErrorException('User creating process failed');
+        returnData.error = true;
+        returnData.message = 'User creating process failed';
+        return returnData;
+        // throw new InternalServerErrorException('User creating process failed');
       }
       const { password, ...user } = data;
 
       const otpData: OtpDto = {
-        userId: user.id || 11,
+        userId: user.id,
         email: createUserDto.email,
         otp: otp,
         service: 'VerifyAccount',
@@ -118,7 +120,10 @@ export class UsersService {
       try {
         const verify = await this.otpService.saveOtp(otpData);
         if (!verify) {
-          throw new InternalServerErrorException('OTP saving failed');
+          returnData.error = true;
+          returnData.message = 'OTP saving failed';
+          return returnData;
+          // throw new InternalServerErrorException('OTP saving failed');
         }
         try {
           const mailContents: MailContents = {
@@ -136,22 +141,24 @@ export class UsersService {
           await this.sendMail(mailData);
         } catch (error) {
           console.log({ error });
-          throw new InternalServerErrorException("OTP didn't sent to user");
+          throw error;
+          // throw new InternalServerErrorException("OTP didn't sent to user");
         }
       } catch (error) {
         console.log({ error });
       }
-
-      returnData.message = 'User created Successfully';
+      returnData.error = false;
+      returnData.message = 'Success';
       returnData.value = user;
+      return returnData;
     } catch (error) {
       console.log({ error });
+      throw error;
     }
-
-    return returnData;
   }
 
   async uploadFile(file: Express.Multer.File, user: Users) {
+    const returnData = new ReturnData();
     const path = process.env.AWS_BUCKET_PATH;
 
     try {
@@ -171,18 +178,23 @@ export class UsersService {
       );
 
       if (!s3Url) {
-        throw new InternalServerErrorException('No url returned from S3');
+        returnData.error = true;
+        returnData.message = 'No url returned from S3';
+        return returnData;
+        // throw new InternalServerErrorException('No url returned from S3');
       }
       console.log('File uploaded:', s3Url);
 
       const updateProfile = await this.usersRepo.update(user.id, {
         profilePicture: s3Url,
       });
-
-      return { ...updateProfile, s3Url: s3Url };
+      returnData.error = false;
+      returnData.message = 'Success';
+      returnData.value = { ...updateProfile, s3Url: s3Url };
+      return returnData;
     } catch (error) {
       console.error('Error uploading file:', error.message);
-      return 'File upload failed!';
+      throw error;
     }
   }
 
@@ -191,105 +203,157 @@ export class UsersService {
     const user = await this.findOneByEmail(payload.email);
     const verifyOtp = await this.otpService.verifyAccount(payload);
     if (!verifyOtp) {
-      throw new UnauthorizedException('Incorrect OTP');
+      returnData.error = true;
+      returnData.message = 'Incorrect OTP';
+      return returnData;
+      // throw new UnauthorizedException('Incorrect OTP');
     }
 
     // Update status
-    const updateUser = await this.update(user.id, { isActive: true });
+    await this.update(user.id, { isActive: true });
 
     // Clear OTP's
-    const clearOtp = await this.otpService.remove(
-      payload.email,
-      'VerifyAccount',
-    );
+    await this.otpService.remove(payload.email, 'VerifyAccount');
 
-    returnData.message = 'User verified successfully';
+    returnData.error = false;
+    returnData.message = 'Success';
     returnData.value = user.email;
     return returnData;
   }
 
   async assign(id: number) {
+    const returnData = new ReturnData();
     const updateUserDto: UpdateUserDto = { role: 'Instructor' };
 
-    const verifyUser = await this.findOne(id);
+    const verifyUser = await this.usersRepo.findOneBy({ id });
 
     // Add more conditions to filter high level students
-
     if (!verifyUser.isActive || verifyUser.role !== 'Student') {
-      throw new ForbiddenException('User not allowed to promote as Instructor');
+      returnData.error = true;
+      returnData.message = 'User not allowed to promote as Instructor';
+      return returnData;
+      // throw new ForbiddenException('User not allowed to promote as Instructor');
     }
 
     try {
       const assignUser = await this.usersRepo.update(id, updateUserDto);
       if (!assignUser) {
-        throw new MisdirectedException('Promotion failed');
+        returnData.error = true;
+        returnData.message = 'Promotion failed';
+        return returnData;
+        // throw new MisdirectedException('Promotion failed');
       }
-      return assignUser;
+      returnData.error = false;
+      returnData.message = 'Success';
+      returnData.value = { updatedRows: assignUser.affected };
+      return returnData;
     } catch (error) {
       console.log({ error });
-
       throw error;
     }
   }
 
   async findAll() {
     const returnData = new ReturnData();
-    const data = await this.usersRepo.find({
-      select: [
-        'id',
-        'username',
-        'email',
-        'age',
-        'isActive',
-        'phone',
-        'role',
-        'createdAt',
-        'updatedAt',
-        'profilePicture',
-      ],
-    });
-    if (data.length === 0) {
-      throw new NotFoundException('No users found');
-    }
-
-    returnData.message = 'Users fetched successfully';
-    returnData.value = data;
-    return returnData;
-  }
-
-  async findOne(id: number) {
     try {
-      const user = await this.usersRepo.findOneBy({ id });
-      if (!user) {
-        throw new NotFoundException('No user found for this userId');
+      const data = await this.usersRepo.find({
+        select: [
+          'id',
+          'username',
+          'email',
+          'age',
+          'isActive',
+          'phone',
+          'role',
+          'createdAt',
+          'updatedAt',
+          'profilePicture',
+        ],
+      });
+      if (data.length === 0) {
+        returnData.error = true;
+        returnData.message = 'No users found';
+        return returnData;
+        // throw new NotFoundException('No users found');
       }
-      return user;
+      returnData.error = false;
+      returnData.message = 'Success';
+      returnData.value = data;
+      return returnData;
     } catch (error) {
+      console.log(error);
       throw error;
     }
   }
 
+  async findOne(id: number) {
+    const returnData = new ReturnData();
+
+    try {
+      const user = await this.usersRepo.findOneBy({ id });
+      if (!user) {
+        returnData.error = true;
+        returnData.message = 'No user found for this userId';
+        return returnData;
+        // throw new NotFoundException('No user found for this userId');
+      }
+      returnData.error = false;
+      returnData.message = 'Success';
+      returnData.value = user;
+      return returnData;
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
+  }
+
+  // helper
   async findOneByEmail(email: string) {
     const user = await this.usersRepo.findOneBy({ email });
-    // console.log(user);
-    // console.log(typeof user);
-
     return user;
   }
 
   async update(id: number, updateUserDto: UpdateUserDto) {
     const returnData = new ReturnData();
-    const data = await this.usersRepo.update(id, updateUserDto);
-    returnData.message = 'User updated successfully';
-    returnData.value = { modifiedRows: data.affected };
-    return returnData;
+
+    try {
+      const data = await this.usersRepo.update(id, updateUserDto);
+
+      if (data.affected === 0) {
+        returnData.error = true;
+        returnData.message = 'User update failed';
+        return returnData;
+        // throw new MisdirectedException('User update failed');
+      }
+      returnData.error = false;
+      returnData.message = 'Success';
+      returnData.value = { modifiedRows: data.affected };
+      return returnData;
+    } catch (error) {
+      console.error('Error updating User:', error);
+      throw error;
+    }
   }
 
   async remove(id: number) {
     const returnData = new ReturnData();
-    const data = await this.usersRepo.delete({ id });
-    returnData.message = 'User deleted successfully';
-    returnData.value = { modifiedRows: data.affected };
-    return returnData;
+
+    try {
+      const data = await this.usersRepo.delete({ id });
+
+      if (data.affected === 0) {
+        returnData.error = true;
+        returnData.message = 'User deletion failed';
+        return returnData;
+        // throw new MisdirectedException('User deletion failed');
+      }
+      returnData.error = false;
+      returnData.message = 'Success';
+      returnData.value = { modifiedRows: data.affected };
+      return returnData;
+    } catch (error) {
+      console.error('Error deleting User:', error);
+      throw error;
+    }
   }
 }

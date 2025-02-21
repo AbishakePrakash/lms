@@ -44,17 +44,26 @@ export class AuthService {
 
     const user = await this.usersService.findOneByEmail(signinCred.email);
     if (!user) {
-      throw new UnauthorizedException('User not found');
+      returnData.error = true;
+      returnData.message = 'User not found';
+      return returnData;
+      // throw new UnauthorizedException('User not found');
     }
 
     if (user.isActive === false) {
-      throw new UnauthorizedException('User not Verified');
+      returnData.error = true;
+      returnData.message = 'User not Verified';
+      return returnData;
+      // throw new UnauthorizedException('User not Verified');
     }
 
     const matched = await bcrypt.compare(signinCred.password, user.password);
 
     if (!matched) {
-      throw new UnauthorizedException('Incorrect Password');
+      returnData.error = true;
+      returnData.message = 'Incorrect Password';
+      return returnData;
+      // throw new UnauthorizedException('Incorrect Password');
     }
 
     const { password, ...data } = user;
@@ -157,7 +166,7 @@ export class AuthService {
       // console.log(error);
       throw error;
     }
-
+    returnData.error = false;
     returnData.message = 'Success';
     returnData.value = processLog;
 

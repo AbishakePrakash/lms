@@ -17,6 +17,7 @@ import { AnswersService } from 'src/answers/answers.service';
 import { Users } from 'src/users/entities/user.entity';
 import { purifyHtml } from 'src/utils/sanitizeHtml';
 import { uploadToS3 } from 'src/utils/awsBucket';
+import { ReturnData } from 'src/utils/globalValues';
 
 @Injectable()
 export class QuestionService {
@@ -43,7 +44,7 @@ export class QuestionService {
   //   try {
   //     const question = await this.questionRepository.save(payLoad);
   //     if (!question) {
-  //       throw new MisdirectedException('Question posting failed');
+  //      // throw new MisdirectedException('Question posting failed');
   //     }
   //     return question;
   //   } catch (error) {
@@ -55,69 +56,82 @@ export class QuestionService {
   async create(
     createQuestionDto: CreateQuestionDto,
     user: Users,
-    file: Express.Multer.File,
+    // file: Express.Multer.File,
   ) {
-    const path = process.env.AWS_BUCKET_PATH;
-    // console.log({ path });
+    const returnData = new ReturnData();
 
     // HTML sanitizing
     const sanitizedHtml = purifyHtml(createQuestionDto.richText);
-    // console.log({ createQuestionDto });
-
-    const parsifiedTags = createQuestionDto.tags.split(',');
     createQuestionDto.richText = sanitizedHtml;
 
+    const parsifiedTags = createQuestionDto.tags.split(',');
     const { tags, ...newDto } = createQuestionDto;
-    // console.log({ newDto });
+
+    const payLoad = {
+      ...newDto,
+      email: user.email,
+      userId: user.id,
+      // refImage: s3Url,
+      tags: parsifiedTags,
+    };
+
+    try {
+      const question = await this.questionRepository.save(payLoad);
+      if (!question) {
+        returnData.error = true;
+        returnData.message = 'Question posting failed';
+        return returnData;
+        // throw new MisdirectedException('Question posting failed');
+      }
+      returnData.error = false;
+      returnData.message = 'Success';
+      returnData.value = question;
+      return returnData;
+    } catch (error) {
+      console.log({ error });
+      return error;
+    }
 
     // Image upload to S3
-    try {
-      const { buffer, originalname, mimetype } = file;
-      const s3Url = await uploadToS3(
-        buffer,
-        originalname,
-        mimetype,
-        `${path}/question`,
-      );
+    // try {
+    //   const { buffer, originalname, mimetype } = file;
+    //   const s3Url = await uploadToS3(
+    //     buffer,
+    //     originalname,
+    //     mimetype,
+    //     `${path}/question`,
+    //   );
 
-      if (!s3Url) {
-        throw new MisdirectedException('No url returned from S3');
-      }
-      console.log('File uploaded:', s3Url);
+    //   if (!s3Url) {
+    //     // throw new MisdirectedException('No url returned from S3');
+    //   }
+    //   console.log('File uploaded:', s3Url);
 
-      // Update sanitized HTML & refImage link
-      const payLoad = {
-        ...newDto,
-        email: user.email,
-        userId: user.id,
-        refImage: s3Url,
-        tags: parsifiedTags,
-      };
+    //   Update sanitized HTML & refImage link
 
-      // Saving question to DB
-      try {
-        const question = await this.questionRepository.save(payLoad);
-        if (!question) {
-          throw new MisdirectedException('Question posting failed');
-        }
-        return question;
-      } catch (error) {
-        console.log({ error });
-        return error;
-      }
-    } catch (error) {
-      console.error('Error uploading file:', error.message);
-      return 'File upload failed!';
-    }
+    //   Saving question to DB
+
+    // } catch (error) {
+    //   console.error('Error uploading file:', error.message);
+    //   return 'File upload failed!';
+    // }
   }
 
   async findAll() {
+    const returnData = new ReturnData();
+
     try {
       const questions = await this.questionRepository.find();
       if (questions.length === 0) {
-        throw new NotFoundException('No  questions found');
+        returnData.error = true;
+        returnData.message = 'No  questions found';
+        return returnData;
+        // throw new NotFoundException('No  questions found');
       }
-      return questions;
+      returnData.error = false;
+      returnData.message = 'Success';
+      returnData.value = questions;
+      return returnData;
     } catch (error) {
       // console.log({ error });
       throw error;
@@ -125,26 +139,30 @@ export class QuestionService {
   }
 
   async findOne(id: number) {
+    const returnData = new ReturnData();
     try {
-      const question = await this.questionRepository.findOne({
-        where: { questionId: id },
+      const question = await this.questionRepository.findOneBy({
+        questionId: id,
       });
       if (!question) {
-        throw new NotFoundException('No question found for this Question Id');
+        returnData.error = true;
+        returnData.message = 'No  questions found for this Question Id';
+        return returnData;
+        // throw new NotFoundException('No question found for this Question Id');
       }
 
       //Inject Answers
-
       const answers = await this.answersService.findbyParent(
         question.questionId,
       );
 
-      const allComments = await this.commentsService.findbyAnswer();
       //Inject Comments for Answers
+      const allComments = await this.commentsService.findbyAnswer();
       const answersWithComments = answers.map((answer) => {
         const commentsForAnswer = allComments.filter(
           (comment) => comment.parentId === answer.answerId,
         );
+
         return {
           ...answer,
           comments: commentsForAnswer,
@@ -164,17 +182,30 @@ export class QuestionService {
         comments: comments,
       };
 
-      return postData;
+      returnData.error = false;
+      returnData.message = 'Success';
+      returnData.value = {
+        ...question,
+        answers: answersWithComments,
+        comments: comments,
+      };
+      return returnData;
     } catch (error) {
       console.log({ error });
     }
   }
 
   async update(id: number, updateQuestionDto: UpdateQuestionDto) {
-    const question = await this.findOne(id);
+    const returnData = new ReturnData();
 
+    const question = await this.questionRepository.findOneBy({
+      questionId: id,
+    });
     if (!question) {
-      throw new NotFoundException('No question found for this Question Id');
+      returnData.error = true;
+      returnData.message = 'No questions found for this Question Id';
+      return returnData;
+      // throw new NotFoundException('No question found for this Question Id');
     }
 
     const tagsArray = updateQuestionDto.tags
@@ -190,22 +221,31 @@ export class QuestionService {
       const result = await this.questionRepository.update(id, payLoad);
 
       if (result.affected === 0) {
-        throw new MisdirectedException('Question update failed');
+        returnData.error = true;
+        returnData.message = 'Question update failed';
+        return returnData;
+        // throw new MisdirectedException('Question update failed');
       }
-
-      return { updatedRows: result.affected };
+      returnData.error = false;
+      returnData.message = 'Success';
+      returnData.value = { updatedRows: result.affected };
+      return returnData;
     } catch (error) {
       console.error('Error updating question:', error);
-      throw new InternalServerErrorException(
-        'An unexpected error occurred while updating the question.',
-      );
+      throw error;
     }
   }
 
   async remove(id: number) {
-    const checkAvailability = await this.findOne(id);
+    const returnData = new ReturnData();
+    const checkAvailability = await this.questionRepository.findOneBy({
+      questionId: id,
+    });
     if (!checkAvailability) {
-      throw new NotFoundException('No question found for this Question Id');
+      returnData.error = true;
+      returnData.message = 'No question found for this Question Id';
+      return returnData;
+      // throw new NotFoundException('No question found for this Question Id');
     }
 
     try {
@@ -213,9 +253,16 @@ export class QuestionService {
         questionId: id,
       });
       if (!deleteQuestion) {
-        throw new MisdirectedException('Question deletion failed');
+        returnData.error = true;
+        returnData.message = 'Question deletion failed';
+        return returnData;
+        // throw new MisdirectedException('Question deletion failed');
       }
-      return { deletedRows: deleteQuestion.affected };
+      returnData.error = false;
+      returnData.message = 'Success';
+      returnData.value = { deletedRows: deleteQuestion.affected };
+      return returnData;
+      // return { deletedRows: deleteQuestion.affected };
     } catch (error) {
       console.log({ error });
       throw error;
@@ -223,38 +270,50 @@ export class QuestionService {
   }
 
   async upVote(id: number) {
-    const checkAvailability = await this.findOne(id);
+    const returnData = new ReturnData();
+    const checkAvailability = await this.questionRepository.findOneBy({
+      questionId: id,
+    });
 
     if (!checkAvailability) {
-      throw new NotFoundException('No question found for this Question Id');
+      returnData.error = true;
+      returnData.message = 'No question found for this Question Id';
+      return returnData;
+      // throw new NotFoundException('No question found for this Question Id');
     }
 
     try {
       const updatedRows = await this.questionRepository.update(id, {
         upvote: checkAvailability.upvote + 1,
       });
-
-      // if (!updatedRows) {
-
-      // }
-      return { updatedRows: updatedRows.affected };
+      returnData.error = false;
+      returnData.message = 'Success';
+      returnData.value = { updatedRows: updatedRows.affected };
+      return returnData;
     } catch (error) {}
   }
 
   async downVote(id: number) {
-    const checkAvailability = await this.findOne(id);
+    const returnData = new ReturnData();
+    const checkAvailability = await this.questionRepository.findOneBy({
+      questionId: id,
+    });
     if (!checkAvailability) {
-      throw new NotFoundException('No question found for this Question Id');
+      returnData.error = true;
+      returnData.message = 'No question found for this Question Id';
+      return returnData;
+      // throw new NotFoundException('No question found for this Question Id');
     }
 
     try {
       const updatedRows = await this.questionRepository.update(id, {
         downvote: checkAvailability.downvote + 1,
       });
-      // if (!updatedRows) {
 
-      // }
-      return { updatedRows: updatedRows.affected };
+      returnData.error = false;
+      returnData.message = 'Success';
+      returnData.value = { updatedRows: updatedRows.affected };
+      return returnData;
     } catch (error) {}
   }
 }
