@@ -32,6 +32,12 @@ export class Question {
   @Column('text', { array: true, default: null })
   tags: string[];
 
+  @Column({ default: '' })
+  richText: string;
+
+  @Column({ default: '' })
+  refImage: string;
+
   @Column({ default: 0 })
   upvote: number;
 
