@@ -64,7 +64,7 @@ export class QuestionService {
     const sanitizedHtml = purifyHtml(createQuestionDto.richText);
     createQuestionDto.richText = sanitizedHtml;
 
-    const parsifiedTags = createQuestionDto.tags.split(',');
+    const parsifiedTags = createQuestionDto.tags.split(',') || [];
     const { tags, ...newDto } = createQuestionDto;
 
     const payLoad = {
