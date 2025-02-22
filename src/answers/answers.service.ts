@@ -43,7 +43,7 @@ export class AnswersService {
       //Add count to Question Repo
       await this.updateAnswerCount(answer.questionId, 'create');
       returnData.error = false;
-      returnData.message = 'Answer posted successfully';
+      returnData.message = 'Success';
       returnData.value = answer;
       return returnData;
     } catch (error) {
@@ -77,7 +77,7 @@ export class AnswersService {
         // throw new NotFoundException('No Answers found');
       }
       returnData.error = false;
-      returnData.message = 'Answers fetched successfully';
+      returnData.message = 'Success';
       return answers;
     } catch (error) {
       console.log({ error });
@@ -106,7 +106,7 @@ export class AnswersService {
 
       const comments = await this.commentsService.findbyParent(fetchBody);
       returnData.error = false;
-      returnData.message = 'Answer found';
+      returnData.message = 'Success';
       returnData.value = { ...answer, comments: comments };
 
       return returnData;
@@ -200,7 +200,7 @@ export class AnswersService {
         upvote: checkAvailability.upvote + 1,
       });
       returnData.error = false;
-      returnData.message = 'Your vote has been saved';
+      returnData.message = 'Success';
       returnData.value = { updatedRows: updatedRows.affected };
       return updatedRows;
     } catch (error) {
@@ -226,7 +226,7 @@ export class AnswersService {
         downvote: checkAvailability.downvote + 1,
       });
       returnData.error = false;
-      returnData.message = 'Your vote has been saved';
+      returnData.message = 'Success';
       returnData.value = { updatedRows: updatedRows.affected };
       return returnData;
     } catch (error) {

@@ -47,7 +47,7 @@ export class UsersService {
       const status = data.split(' ')[0];
       if (status === '250') {
         returnData.error = false;
-        returnData.message = 'Mail sent successfully';
+        returnData.message = 'Success';
         returnData.value = data;
         // returnData.value = parseInt(status);
       }

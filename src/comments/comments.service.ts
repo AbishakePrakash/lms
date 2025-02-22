@@ -52,7 +52,7 @@ export class CommentsService {
         // throw new BadRequestException('Invalid parentType');
       }
       returnData.error = false;
-      returnData.message = 'Comment stored Successfully';
+      returnData.message = 'Success';
       returnData.value = comments;
       return returnData;
       // return comments;
@@ -129,7 +129,7 @@ export class CommentsService {
         // throw new NotFoundException('No comments found');
       }
       returnData.error = false;
-      returnData.message = 'Comments fetched Successfully';
+      returnData.message = 'Success';
       returnData.value = comments;
       return returnData;
       // return comments;
@@ -151,7 +151,7 @@ export class CommentsService {
         // throw new NotFoundException('No comment found for this ID');
       }
       returnData.error = false;
-      returnData.message = 'Comment fetched Successfully';
+      returnData.message = 'Success';
       returnData.value = comment;
       return returnData;
       // return comment;
@@ -205,7 +205,7 @@ export class CommentsService {
         // throw new MisdirectedException('Comment not updated');
       }
       returnData.error = false;
-      returnData.message = 'Comment updated Successfully';
+      returnData.message = 'Success';
       returnData.value = { updatedRows: updatedComment.affected };
       return returnData;
       // return { updatedRows: updatedComment.affected };
@@ -249,7 +249,7 @@ export class CommentsService {
         // throw new BadRequestException('Invalid parentType');
       }
       returnData.error = false;
-      returnData.message = 'Comment deleted Successfully';
+      returnData.message = 'Success';
       returnData.value = { updatedRows: deletedComment.affected };
       return returnData;
       // return { deletedRows: deletedComment.affected };
