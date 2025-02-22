@@ -11,7 +11,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Lesson } from './entities/lesson.entity';
 import { Repository } from 'typeorm';
 import { ChangeOrderDto } from './dto/changeOrder.dto';
-import { midGround } from 'src/utils/globalValues';
+import { midGround, ReturnData } from 'src/utils/globalValues';
 import { log } from 'console';
 import { DoubtService } from 'src/doubt/doubt.service';
 import { uploadToS3 } from 'src/utils/awsBucket';
@@ -26,6 +26,8 @@ export class LessonService {
   ) {}
 
   async create(createLessonDto: CreateLessonDto, file: Express.Multer.File) {
+    const returnData = new ReturnData();
+
     const maxOrder = await this.lessonRepository.find({
       select: ['order'],
       order: { order: 'DESC' },
@@ -42,11 +44,13 @@ export class LessonService {
     }
 
     // Video Upload
-
     const { buffer, originalname, mimetype, path } = file;
 
     if (!mimetype.startsWith('video/')) {
-      throw new BadRequestException('Only video files are allowed!');
+      returnData.error = true;
+      returnData.message = 'Only video files are allowed!';
+      return returnData;
+      // throw new BadRequestException('Only video files are allowed!');
     }
 
     const videoUrl = await uploadToS3(buffer, originalname, mimetype, 'lesson');
@@ -59,88 +63,156 @@ export class LessonService {
     try {
       const lesson = await this.lessonRepository.save(payLoad);
       if (!lesson) {
-        throw new MisdirectedException('Lesson not created');
+        returnData.error = true;
+        returnData.message = 'Lesson not created';
+        return returnData;
+        // throw new MisdirectedException('Lesson not created');
       }
-      return lesson;
+      returnData.error = false;
+      returnData.message = 'Success';
+      returnData.value = lesson;
+      return returnData;
     } catch (error) {
+      console.log(error);
       throw error;
     }
   }
 
   async findAll() {
+    const returnData = new ReturnData();
+
     try {
       const lessons = await this.lessonRepository.find();
       if (lessons.length === 0) {
-        throw new NotFoundException('No Lessons found');
+        returnData.error = true;
+        returnData.message = 'No Lessons found';
+        return returnData;
+        // throw new NotFoundException('No Lessons found');
       }
-      return lessons;
+      returnData.error = false;
+      returnData.message = 'Success';
+      returnData.value = lessons;
+      return returnData;
     } catch (error) {
+      console.log(error);
+
       throw error;
     }
   }
 
   async findOne(id: number) {
+    const returnData = new ReturnData();
+
     try {
       const lesson = await this.lessonRepository.findOneBy({ lessonId: id });
 
       if (!lesson) {
-        throw new NotFoundException('No Lesson found for the given Id');
+        returnData.error = true;
+        returnData.message = 'No Lesson found for the given Id';
+        return returnData;
+        // throw new NotFoundException('No Lesson found for the given Id');
       }
       const doubts = await this.doubtService.findByLesson(id);
-      return { ...lesson, doubts: doubts };
+      returnData.error = false;
+      returnData.message = 'Success';
+      returnData.value = { ...lesson, doubts: doubts };
+      return returnData;
+      // return { ...lesson, doubts: doubts };
     } catch (error) {
+      console.log(error);
+
       throw error;
     }
   }
 
   // helper
   async findByChapter(id: number) {
+    const returnData = new ReturnData();
+
     try {
       const lessons = await this.lessonRepository.findBy({ chapterId: id });
-
-      return lessons;
+      if (lessons.length === 0) {
+        returnData.error = true;
+        returnData.message = 'No Lesson found for the given Chapter Id';
+        return returnData;
+        // throw new NotFoundException('No Lesson found for the given Chapter Id');
+      }
+      returnData.error = false;
+      returnData.message = 'Success';
+      returnData.value = lessons;
+      return returnData;
     } catch (error) {
+      console.log(error);
+
       throw error;
     }
   }
 
   async update(id: number, updateLessonDto: UpdateLessonDto) {
+    const returnData = new ReturnData();
+
     try {
       const updateLesson = await this.lessonRepository.update(
         id,
         updateLessonDto,
       );
       if (!updateLesson.affected) {
-        throw new MisdirectedException('Updating lesson failed');
+        returnData.error = true;
+        returnData.message = 'Updating lesson failed';
+        return returnData;
+        // throw new MisdirectedException('Updating lesson failed');
       }
-      return updateLesson;
+      returnData.error = false;
+      returnData.message = 'Success';
+      returnData.value = { updatedRows: updateLesson.affected };
+      return returnData;
     } catch (error) {
+      console.log(error);
+
       throw error;
     }
   }
 
   async remove(id: number) {
+    const returnData = new ReturnData();
+
     try {
       const deleteLesson = await this.lessonRepository.delete(id);
       if (!deleteLesson.affected) {
-        throw new MisdirectedException('Deleting lesson failed');
+        returnData.error = true;
+        returnData.message = 'Deleting lesson failed';
+        return returnData;
+        // throw new MisdirectedException('Deleting lesson failed');
       }
-      return deleteLesson;
+      returnData.error = false;
+      returnData.message = 'Success';
+      returnData.value = { updatedRows: deleteLesson.affected };
+      return returnData;
+      // return deleteLesson;
     } catch (error) {
+      console.log(error);
+
       throw error;
     }
   }
 
   async changeOrder(payload: ChangeOrderDto, string: string) {
+    const returnData = new ReturnData();
+
     console.log(string);
     var previousOrder;
     try {
       console.log('Log B');
 
       try {
-        const previousLesson: Lesson = await this.findOne(payload.prevId);
+        const previousLesson: Lesson = await this.lessonRepository.findOneBy({
+          lessonId: payload.prevId,
+        });
         if (!previousLesson) {
-          throw new MisdirectedException("Can't find previous lesson");
+          returnData.error = true;
+          returnData.message = "Can't find previous lesson";
+          return returnData;
+          // throw new MisdirectedException("Can't find previous lesson");
         }
         previousOrder = previousLesson.order;
       } catch (error) {

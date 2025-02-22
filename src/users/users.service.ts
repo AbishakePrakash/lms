@@ -201,6 +201,11 @@ export class UsersService {
   async setAsActive(payload: VerifyAccountPayload) {
     const returnData = new ReturnData();
     const user = await this.findOneByEmail(payload.email);
+    if (!user) {
+      returnData.error = true;
+      returnData.message = 'No account registered with thie email Id';
+      return returnData;
+    }
     const verifyOtp = await this.otpService.verifyAccount(payload);
     if (!verifyOtp) {
       returnData.error = true;

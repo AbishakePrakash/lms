@@ -47,7 +47,7 @@ export class OtpService {
     });
 
     if (!data) {
-      throw new NotFoundException('No account registered with thie email Id');
+      return null;
     }
 
     //Prod
@@ -70,25 +70,27 @@ export class OtpService {
     return otpData;
   }
 
-  async resetPassword(payload: VerifyOtpPayload) {
-    // console.log({ payload });
+  // check
 
-    const data = await this.otpRepository.findOne({
-      where: { email: payload.email, service: 'PasswordReset' },
-      order: { createdAt: 'DESC' },
-    });
+  // async resetPassword(payload: VerifyOtpPayload) {
+  //   // console.log({ payload });
 
-    if (!data) {
-      throw new NotFoundException('No account registered with this email Id');
-    }
+  //   const data = await this.otpRepository.findOne({
+  //     where: { email: payload.email, service: 'PasswordReset' },
+  //     order: { createdAt: 'DESC' },
+  //   });
 
-    const expiryTime = new Date(data.createdAt).getTime() + 300000;
-    const currentTime = new Date().getTime();
-    // if (currentTime > expiryTime) {
-    //   throw new RequestTimeoutException('Otp Expired');
-    // }
-    // console.log(data.otp, payload.otp);
+  //   if (!data) {
+  //     // throw new NotFoundException('No account registered with this email Id');
+  //   }
 
-    return data.otp === payload.otp;
-  }
+  //   const expiryTime = new Date(data.createdAt).getTime() + 300000;
+  //   const currentTime = new Date().getTime();
+  //   // if (currentTime > expiryTime) {
+  //   //   throw new RequestTimeoutException('Otp Expired');
+  //   // }
+  //   // console.log(data.otp, payload.otp);
+
+  //   return data.otp === payload.otp;
+  // }
 }

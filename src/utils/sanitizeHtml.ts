@@ -6,32 +6,38 @@ const maxLength = 7000;
 
 export function purifyHtml(richText: string) {
   if (typeof richText !== 'string' || !richText.trim()) {
-    throw new BadRequestException('RichText must be a non-empty string');
+    return null;
+
+    // throw new BadRequestException('RichText must be a non-empty string');
   }
 
   if (/<html.*?>|<head.*?>/i.test(richText)) {
-    throw new BadRequestException(
-      'RichText should not contain a full HTML page',
-    );
+    return null;
+    // throw new BadRequestException(
+    //   'RichText should not contain a full HTML page',
+    // );
   }
 
   const textOnly = richText.replace(/<[^>]+>/g, '').trim();
   if (textOnly.length < minLength || textOnly.length > maxLength) {
-    throw new BadRequestException(
-      `RichText must be between ${minLength} and ${maxLength} characters`,
-    );
+    return null;
+    // throw new BadRequestException(
+    //   `RichText must be between ${minLength} and ${maxLength} characters`,
+    // );
   }
 
   if (!textOnly) {
-    throw new BadRequestException(
-      'RichText must contain actual content, not just empty tags',
-    );
+    return null;
+    // throw new BadRequestException(
+    //   'RichText must contain actual content, not just empty tags',
+    // );
   }
 
   if (/(on\w+=|javascript:)/i.test(richText)) {
-    throw new BadRequestException(
-      'RichText contains potentially unsafe attributes or JavaScript',
-    );
+    return null;
+    // throw new BadRequestException(
+    //   'RichText contains potentially unsafe attributes or JavaScript',
+    // );
   }
 
   const cleanHtml = sanitizeHtml(richText, {
@@ -40,9 +46,10 @@ export function purifyHtml(richText: string) {
   });
 
   if (cleanHtml !== richText) {
-    throw new BadRequestException(
-      'RichText contains disallowed HTML tags or attributes',
-    );
+    return null;
+    // throw new BadRequestException(
+    //   'RichText contains disallowed HTML tags or attributes',
+    // );
   }
 
   return cleanHtml;
