@@ -28,34 +28,54 @@ export class CommentsService {
     @InjectRepository(Question)
     private readonly questionRepository: Repository<Question>,
   ) {}
+
   async create(createCommentDto: CreateCommentDto, user: Users) {
     const returnData = new ReturnData();
-    console.log({ user });
+
+    if (createCommentDto.parentType === 'question') {
+      const checkAvailability = await this.questionRepository.findOneBy({
+        questionId: createCommentDto.parentId,
+      });
+      if (!checkAvailability) {
+        returnData.error = true;
+        returnData.message = 'No question found for this Parent Id';
+        return returnData;
+      }
+    } else if (createCommentDto.parentType === 'answer') {
+      const checkAvailability = await this.answerRepository.findOneBy({
+        answerId: createCommentDto.parentId,
+      });
+      if (!checkAvailability) {
+        returnData.error = true;
+        returnData.message = 'No answer found for this Parent Id';
+        return returnData;
+      }
+    } else {
+      returnData.error = true;
+      returnData.message = 'Invalid parentType';
+      return returnData;
+    }
 
     const payLoad = { ...createCommentDto, email: user.email, userId: user.id };
+
     try {
       const comments = await this.commentRepository.save(payLoad);
       if (!comments) {
         returnData.error = true;
         returnData.message = 'Comment not posted';
         return returnData;
-        // throw new MisdirectedException('Comment not posted');
       }
+
       if (createCommentDto.parentType === 'question') {
         await this.updateQuestionCount(createCommentDto.parentId, 'create');
       } else if (createCommentDto.parentType === 'answer') {
         await this.updateAnswerCount(createCommentDto.parentId, 'create');
-      } else {
-        returnData.error = true;
-        returnData.message = 'Invalid parentType';
-        return returnData;
-        // throw new BadRequestException('Invalid parentType');
       }
+
       returnData.error = false;
       returnData.message = 'Success';
       returnData.value = comments;
       return returnData;
-      // return comments;
     } catch (error) {
       console.log({ error });
       throw error;
@@ -67,6 +87,10 @@ export class CommentsService {
     const targetAnswer = await this.answerRepository.findOneBy({
       answerId: id,
     });
+
+    // console.log({ targetAnswer });
+
+    // return targetAnswer;
 
     try {
       const updatedAnswer = await this.answerRepository.update(
@@ -275,7 +299,10 @@ export class CommentsService {
       const updatedRows = await this.commentRepository.update(id, {
         likes: checkAvailability.likes + 1,
       });
-      return { updatedRows: updatedRows.affected };
+      returnData.error = false;
+      returnData.message = 'Success';
+      returnData.value = { updatedRows: updatedRows.affected };
+      return returnData;
     } catch (error) {
       console.log({ error });
       throw error;

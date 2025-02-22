@@ -78,7 +78,8 @@ export class AnswersService {
       }
       returnData.error = false;
       returnData.message = 'Success';
-      return answers;
+      returnData.value = answers;
+      return returnData;
     } catch (error) {
       console.log({ error });
       throw error;
@@ -132,6 +133,16 @@ export class AnswersService {
 
   async update(id: number, updateAnswerDto: UpdateAnswerDto) {
     const returnData = new ReturnData();
+    const targetAnswer = await this.answersRepository.findOneBy({
+      answerId: id,
+    });
+
+    if (!targetAnswer) {
+      returnData.error = true;
+      returnData.message = 'No answer found';
+      return returnData;
+      // throw new MisdirectedException('Answer delete failed');
+    }
     try {
       const updatedAnswer = await this.answersRepository.update(
         id,
@@ -143,7 +154,8 @@ export class AnswersService {
         return returnData;
         // throw new MisdirectedException('Answer update failed');
       }
-      returnData.message = 'Answer updated successfully';
+      returnData.error = false;
+      returnData.message = 'Success';
       returnData.value = { updatedRows: updatedAnswer.affected };
       return returnData;
       // return { updatedRows: updatedAnswer.affected };
@@ -159,6 +171,13 @@ export class AnswersService {
       answerId: id,
     });
 
+    if (!targetAnswer) {
+      returnData.error = true;
+      returnData.message = 'No answer found';
+      return returnData;
+      // throw new MisdirectedException('Answer delete failed');
+    }
+
     try {
       const deletedAnswer = await this.answersRepository.delete(id);
       if (!deletedAnswer) {
@@ -170,8 +189,8 @@ export class AnswersService {
 
       //update answercount
       await this.updateAnswerCount(targetAnswer.questionId, 'delete');
-
-      returnData.message = 'Answer deleted';
+      returnData.error = false;
+      returnData.message = 'Success';
       returnData.value = { deletedRows: deletedAnswer.affected };
       return returnData;
 
@@ -202,7 +221,7 @@ export class AnswersService {
       returnData.error = false;
       returnData.message = 'Success';
       returnData.value = { updatedRows: updatedRows.affected };
-      return updatedRows;
+      return returnData;
     } catch (error) {
       console.log({ error });
       throw error;

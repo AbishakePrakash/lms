@@ -261,20 +261,7 @@ export class UsersService {
   async findAll() {
     const returnData = new ReturnData();
     try {
-      const data = await this.usersRepo.find({
-        select: [
-          'id',
-          'username',
-          'email',
-          'age',
-          'isActive',
-          'phone',
-          'role',
-          'createdAt',
-          'updatedAt',
-          'profilePicture',
-        ],
-      });
+      const data = await this.usersRepo.find();
       if (data.length === 0) {
         returnData.error = true;
         returnData.message = 'No users found';
@@ -314,7 +301,18 @@ export class UsersService {
 
   // helper
   async findOneByEmail(email: string) {
-    const user = await this.usersRepo.findOneBy({ email });
+    const user = await this.usersRepo.findOne({
+      where: { email },
+      select: [
+        'id',
+        'username',
+        'email',
+        'password',
+        'role',
+        'isActive',
+        'profilePicture',
+      ],
+    });
     return user;
   }
 
