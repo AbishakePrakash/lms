@@ -20,7 +20,7 @@ const jwtSecret = process.env.JWT_SECRET;
     JwtModule.register({
       global: true,
       secret: jwtSecret,
-      signOptions: { expiresIn: '24h' },
+      signOptions: { expiresIn: '5d' },
     }),
   ],
 })

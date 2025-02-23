@@ -56,6 +56,18 @@ export class QuestionController {
     );
   }
 
+  @Post('new')
+  @UseGuards(AuthGuard)
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiConsumes('multipart/form-data') // Specifies the content type for the request
+  @ApiBody({
+    description: 'Upload an image file with question details',
+    type: CreateQuestionDto, // Uses the DTO directly
+  })
+  createNew(@Body() createQuestionDto: CreateQuestionDto, @Request() req) {
+    return this.questionService.experiment(createQuestionDto, req.user);
+  }
+
   @Get()
   findAll() {
     return this.questionService.findAll();

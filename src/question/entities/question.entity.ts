@@ -20,8 +20,8 @@ export class Question {
   @Column({ default: '' })
   title: string;
 
-  @Column()
-  question: string;
+  // @Column({ default: '' })
+  // question: string;
 
   @Column({ default: 0 })
   answersCount: number;

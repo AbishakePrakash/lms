@@ -18,6 +18,7 @@ import { Users } from 'src/users/entities/user.entity';
 import { purifyHtml } from 'src/utils/sanitizeHtml';
 import { uploadToS3 } from 'src/utils/awsBucket';
 import { ReturnData } from 'src/utils/globalValues';
+import * as sanitizeHtml from 'sanitize-html';
 
 @Injectable()
 export class QuestionService {
@@ -60,46 +61,52 @@ export class QuestionService {
   ) {
     const returnData = new ReturnData();
 
-    console.log('A: ', createQuestionDto.richText);
-
     // HTML sanitizing
-    // const sanitizedHtml = purifyHtml(createQuestionDto.richText);
-    // createQuestionDto.richText = sanitizedHtml.toString();
-
-    console.log('B: ', createQuestionDto.richText);
-
-    const { tags, ...newDto } = createQuestionDto;
-
-    const payLoad = {
-      ...newDto,
-      email: user.email,
-      userId: user.id,
-      tags: [],
-    };
-
-    if (
-      createQuestionDto.tags !== undefined &&
-      createQuestionDto.tags.length > 0
-    ) {
-      const parsifiedTags = createQuestionDto.tags.split(',');
-      payLoad.tags = parsifiedTags;
-    }
-
-    try {
-      const question = await this.questionRepository.save(payLoad);
-      if (!question) {
-        returnData.error = true;
-        returnData.message = 'Question posting failed';
-        return returnData;
-        // throw new MisdirectedException('Question posting failed');
-      }
-      returnData.error = false;
-      returnData.message = 'Success';
-      returnData.value = question;
+    const sanitizedHtml = purifyHtml(createQuestionDto.richText);
+    if (!sanitizedHtml) {
+      returnData.error = true;
+      returnData.message = 'Richtext Sanitization Failed';
       return returnData;
-    } catch (error) {
-      console.log({ error });
-      return error;
+    } else {
+      createQuestionDto.richText = sanitizedHtml.toString();
+
+      const { tags, ...newDto } = createQuestionDto;
+      const payLoad = {
+        ...newDto,
+        email: user.email,
+        userId: user.id,
+        tags: [],
+      };
+      // Check Tags
+      if (
+        createQuestionDto.tags !== undefined &&
+        createQuestionDto.tags.length > 0
+      ) {
+        const parsifiedTags = createQuestionDto.tags.split(',');
+        payLoad.tags = parsifiedTags;
+
+        try {
+          const question = await this.questionRepository.save(payLoad);
+          if (!question) {
+            returnData.error = true;
+            returnData.message = 'Question posting failed';
+            return returnData;
+            // throw new MisdirectedException('Question posting failed');
+          } else {
+            returnData.error = false;
+            returnData.message = 'Success';
+            returnData.value = question;
+            return returnData;
+          }
+        } catch (error) {
+          console.log({ error });
+          return error;
+        }
+      } else {
+        returnData.error = true;
+        returnData.message = 'Tags undefined';
+        return returnData;
+      }
     }
 
     // Image upload to S3
@@ -125,6 +132,145 @@ export class QuestionService {
     //   console.error('Error uploading file:', error.message);
     //   return 'File upload failed!';
     // }
+  }
+
+  async experiment(
+    createQuestionDto: CreateQuestionDto,
+    user: Users,
+    // file: Express.Multer.File,
+  ) {
+    return new Promise(function (resolve, reject) {
+      function checkRichText(richText: string) {
+        return new Promise(function (resolve, reject) {
+          const minLength = 30;
+          const maxLength = 100000;
+          if (typeof richText !== 'string' || !richText.trim()) {
+            reject('RichText must be a non-empty string');
+          } else if (
+            richText.length < minLength ||
+            richText.length > maxLength
+          ) {
+            reject(
+              `RichText must be between ${minLength} and ${maxLength} characters`,
+            );
+          } else {
+            const textOnly = richText.replace(/<[^>]+>/g, '').trim();
+            if (!textOnly) {
+              reject(
+                'RichText must contain actual content, not just empty tags',
+              );
+            } else if (/(on\w+=|javascript:)/i.test(richText)) {
+              reject(
+                'RichText contains potentially unsafe attributes or JavaScript',
+              );
+            } else {
+              const cleanHtml = sanitizeHtml(richText, {
+                allowedTags: [
+                  'p',
+                  'b',
+                  'i',
+                  'strong',
+                  'em',
+                  'ul',
+                  'ol',
+                  'li',
+                  'br',
+                  'a',
+                ],
+                allowedAttributes: { a: ['href', 'target'] },
+              });
+              if (cleanHtml !== richText) {
+                reject('RichText contains disallowed HTML tags or attributes');
+              } else {
+                resolve(cleanHtml);
+              }
+            }
+          }
+        });
+      }
+
+      function checkTags(tags: string) {
+        return new Promise(function (resolve, reject) {
+          if (tags.length > 0) {
+            const parsifiedTags = tags.split(',');
+            resolve(parsifiedTags);
+          } else {
+            reject('Missing Tags');
+          }
+        });
+      }
+
+      function createQuestion(title, richTextRc, checkTagsRc) {
+        return new Promise(async (resolve, reject) => {
+          const saveDb = await this.questionRepository.save(
+            // question,
+            title,
+            richTextRc,
+            checkTagsRc,
+          );
+
+          if (!saveDb) {
+            reject('Db operation failed');
+          } else {
+            resolve(saveDb);
+          }
+        });
+      }
+
+      (function () {
+        var returnData = {
+          result: {},
+          error: 'ok',
+        };
+        console.log(createQuestionDto);
+
+        if (
+          createQuestionDto.title != undefined &&
+          // createQuestionDto.question != undefined &&
+          createQuestionDto.tags != undefined &&
+          createQuestionDto.richText != undefined
+        ) {
+          checkRichText(createQuestionDto.richText).then(
+            function (richTextRc) {
+              returnData.result = richTextRc;
+              // resolve(returnData);
+              checkTags(createQuestionDto.tags).then(
+                function (checkTagsRc) {
+                  returnData.result = checkTagsRc;
+                  // resolve(returnData);
+                  createQuestion(
+                    // createQuestionDto.question,
+                    createQuestionDto.title,
+                    richTextRc,
+                    checkTagsRc,
+                  ).then(
+                    function (createQuestionRc) {
+                      returnData.result = createQuestionRc;
+                      resolve(returnData);
+                    },
+                    function (createQuestionEr) {
+                      returnData.error = createQuestionEr;
+                      resolve(returnData);
+                    },
+                  );
+                },
+                function (checkTagsEr) {
+                  returnData.error = checkTagsEr;
+                  resolve(returnData);
+                },
+              );
+            },
+            function (richTextEr) {
+              returnData.error = richTextEr;
+              resolve(returnData);
+            },
+          );
+        } else {
+          returnData.error = 'Missing Input';
+          resolve(returnData);
+        }
+      })();
+    });
   }
 
   async findAll() {

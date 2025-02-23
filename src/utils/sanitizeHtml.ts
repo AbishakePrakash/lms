@@ -1,8 +1,8 @@
 import * as sanitizeHtml from 'sanitize-html';
-import { BadRequestException } from '@nestjs/common';
+// import { BadRequestException } from '@nestjs/common';
 
 const minLength = 5;
-const maxLength = 7000;
+const maxLength = 100000;
 
 export function purifyHtml(richText: string) {
   if (typeof richText !== 'string' || !richText.trim()) {
@@ -11,12 +11,12 @@ export function purifyHtml(richText: string) {
     // throw new BadRequestException('RichText must be a non-empty string');
   }
 
-  if (/<html.*?>|<head.*?>/i.test(richText)) {
-    return null;
-    // throw new BadRequestException(
-    //   'RichText should not contain a full HTML page',
-    // );
-  }
+  // if (/<html.*?>|<head.*?>/i.test(richText)) {
+  //   return null;
+  //   // throw new BadRequestException(
+  //   //   'RichText should not contain a full HTML page',
+  //   // );
+  // }
 
   const textOnly = richText.replace(/<[^>]+>/g, '').trim();
   if (textOnly.length < minLength || textOnly.length > maxLength) {
