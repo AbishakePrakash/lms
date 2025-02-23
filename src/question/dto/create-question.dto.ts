@@ -17,6 +17,7 @@ export class CreateQuestionDto {
   @ApiProperty({
     description: 'HTML Content',
     example: '<p>RichText Content.</p>',
+    required: false,
   })
   richText: string;
 

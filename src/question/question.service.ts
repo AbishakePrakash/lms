@@ -64,16 +64,22 @@ export class QuestionService {
     const sanitizedHtml = purifyHtml(createQuestionDto.richText);
     createQuestionDto.richText = sanitizedHtml;
 
-    const parsifiedTags = createQuestionDto.tags.split(',') || [];
     const { tags, ...newDto } = createQuestionDto;
 
     const payLoad = {
       ...newDto,
       email: user.email,
       userId: user.id,
-      // refImage: s3Url,
-      tags: parsifiedTags,
+      tags: [],
     };
+
+    if (
+      createQuestionDto.tags !== undefined &&
+      createQuestionDto.tags.length > 0
+    ) {
+      const parsifiedTags = createQuestionDto.tags.split(',');
+      payLoad.tags = parsifiedTags;
+    }
 
     try {
       const question = await this.questionRepository.save(payLoad);
