@@ -60,9 +60,13 @@ export class QuestionService {
   ) {
     const returnData = new ReturnData();
 
+    console.log('A: ', createQuestionDto.richText);
+
     // HTML sanitizing
-    const sanitizedHtml = purifyHtml(createQuestionDto.richText);
-    createQuestionDto.richText = sanitizedHtml;
+    // const sanitizedHtml = purifyHtml(createQuestionDto.richText);
+    // createQuestionDto.richText = sanitizedHtml.toString();
+
+    console.log('B: ', createQuestionDto.richText);
 
     const { tags, ...newDto } = createQuestionDto;
 

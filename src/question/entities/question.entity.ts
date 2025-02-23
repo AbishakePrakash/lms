@@ -32,7 +32,7 @@ export class Question {
   @Column('text', { array: true, default: null })
   tags: string[];
 
-  @Column({ default: '', nullable: true })
+  @Column({ default: '', nullable: true, type: 'text' })
   richText: string;
 
   @Column({ default: '' })
