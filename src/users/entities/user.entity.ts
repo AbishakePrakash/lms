@@ -30,7 +30,7 @@ export class Users {
   @Column({ default: false })
   isActive: boolean;
 
-  @Column({ select: false })
+  @Column()
   password: string;
 
   @Column({ default: '' })

@@ -73,20 +73,164 @@ export class AuthService {
     return token;
   }
 
+  async signInv2(signinCred: SignInCred): Promise<ReturnData> {
+    return new Promise(async (resolve) => {
+      var usersServiceX = this.usersService;
+      var otpServiceX = this.otpService;
+      var otpGen = this.generateSixDigitNumber;
+      var triggerMail = this.sendMail;
+      var jwtServiceX = this.jwtService;
+      const currentDate = new Date();
+      const mailData = new MailData();
+      const formattedDate = currentDate.toLocaleDateString('en-US', {
+        month: 'short',
+        day: '2-digit',
+        year: 'numeric',
+      });
+
+      // Check Inputs
+      async function checkInputs(signinCred: SignInCred) {
+        if (
+          signinCred.email !== undefined &&
+          signinCred.password !== undefined
+        ) {
+          return true;
+        } else {
+          throw 'Missing Inputs';
+        }
+      }
+
+      // Check User
+      async function checkUser(email: string) {
+        const user = await usersServiceX.findOneByEmail(email);
+
+        if (user && user.isActive) {
+          return user;
+        } else {
+          throw 'User not exists';
+        }
+      }
+
+      // Verify Password
+      async function passwordVerify(payloadPass: string, dbPass: string) {
+        const matched = await bcrypt.compare(payloadPass, dbPass);
+        console.log({
+          matched: matched,
+          payloadPass: payloadPass,
+          dbPass: dbPass,
+        });
+
+        if (matched) {
+          return true;
+        } else {
+          throw 'Incorrect Password';
+        }
+      }
+
+      // Create and Save OTP
+      async function deliverOtp(user: Users) {
+        const otpData: OtpDto = {
+          userId: user.id,
+          email: user.email,
+          otp: otpGen(),
+          service: 'VerifyAccount',
+        };
+        const createdOtp = await otpServiceX.saveOtp(otpData);
+        if (createdOtp) {
+          return createdOtp;
+        } else {
+          throw 'Otp not saved';
+        }
+      }
+
+      // Send Mail
+      async function sendEmail(otpResponse: Otp, user: Users) {
+        const sender = process.env.HQ_SENDER;
+
+        const mailContents: MailContents = {
+          date: formattedDate,
+          username: user.username || 'User',
+          task: 'verify your Account',
+          validity: '5 minutes',
+          otp: otpResponse.otp,
+        };
+
+        // Structuring Mail
+        mailData.from = sender;
+        mailData.to = user.email;
+        mailData.subject = 'Verify Account';
+        mailData.html = emailTemplate(mailContents);
+
+        const mailResponse = await triggerMail(mailData);
+        if (!mailResponse.error) {
+          return mailResponse;
+        } else {
+          throw 'Mail sending failed';
+        }
+      }
+
+      // Generate JWT_Token
+      async function tokenGen(user: Users) {
+        const { password, ...data } = user;
+        const token = await jwtServiceX.signAsync(data);
+        return token;
+      }
+
+      try {
+        const checkedInputs = await checkInputs(signinCred);
+        const checkedUser = await checkUser(signinCred.email);
+        console.log({ checkedUser });
+
+        if (!checkedUser.isActive) {
+          const savedOtp = await deliverOtp(checkedUser);
+          const emailResponse = await sendEmail(savedOtp, checkedUser);
+          resolve({
+            error: false,
+            value: { email: checkedUser.email, redirectTo: 'VerificationPage' },
+            message: 'Success',
+          });
+        } else {
+          const passwordMatches = await passwordVerify(
+            checkedUser.password,
+            signinCred.password,
+          );
+          const token = await tokenGen(checkedUser);
+
+          resolve({
+            error: false,
+            value: {
+              email: checkedUser.email,
+              token: token,
+              redirectTo: 'HomePage',
+            },
+            message: 'Success',
+          });
+        }
+      } catch (error) {
+        console.log({ error });
+        resolve({ error: true, value: null, message: error });
+      }
+    });
+  }
+
   async sendMail(mailData: MailData) {
+    const returnData = new ReturnData();
     try {
       const data = await triggerMaileEvent(mailData);
-      console.log({ data });
       const status = data.split(' ')[0];
       if (status === '250') {
-        return data;
-      } else {
-        return null;
+        returnData.error = false;
+        returnData.message = 'Success';
+        returnData.value = data;
       }
     } catch (error) {
       console.log('Error sending mail: ', error);
-      throw error;
+      returnData.error = true;
+      returnData.message = 'Mail sending failed';
+      return returnData;
+      // throw new Error('Mail sending failed');
     }
+    return returnData;
   }
 
   generateSixDigitNumber() {
@@ -117,15 +261,11 @@ export class AuthService {
 
     const otp = this.generateSixDigitNumber();
 
-    // console.log({ otp });
-
     const otpData: OtpDto = {
       userId: targetUser.id,
       email: targetUser.email,
       otp: otp,
       service: 'PasswordReset',
-      // createdAt: JSON.stringify(createdTime),
-      // expireAt: JSON.stringify(expiringTime),
     };
 
     try {
@@ -178,9 +318,9 @@ export class AuthService {
     const service = 'PasswordReset';
     var processLog: object;
     var data: Otp;
+
     try {
       data = await this.otpService.getOtp(otpPayload.email, service);
-      // console.log({ data });
     } catch (error) {
       console.log(error);
 
@@ -205,10 +345,6 @@ export class AuthService {
     const revokedTime = new Date(time);
 
     const diff = stamp.getTime() - revokedTime.getTime() - 19800000;
-
-    console.log('Current Time:', stamp);
-    console.log('Created Time:', revokedTime);
-    console.log({ diff });
 
     if (diff > 300000) {
       returnData.error = true;

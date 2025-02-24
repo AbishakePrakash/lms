@@ -1,14 +1,9 @@
-import {
-  Injectable,
-  NotFoundException,
-  RequestTimeoutException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { OtpDto } from './dto/create-otp.dto';
 import { VerifyAccountPayload } from './dto/verifyAccount.dto';
 import { Otp } from './entities/otp.entity';
-import { VerifyOtpPayload } from './dto/verify-otp.dto';
 
 @Injectable()
 export class OtpService {
@@ -22,14 +17,6 @@ export class OtpService {
     return otpRes;
   }
 
-  // async getOtp(email: string) {
-  //   const otpData = await this.otpRepository.findOne({
-  //     where: { email },
-  //     order: { createdAt: 'DESC' },
-  //   });
-  //   return otpData;
-  // }
-
   async remove(email: string, service: string) {
     const data = await this.otpRepository.delete({
       email: email,
@@ -38,9 +25,8 @@ export class OtpService {
     return data.affected;
   }
 
+  // helper
   async verifyAccount(payload: VerifyAccountPayload) {
-    // console.log({ payload });
-
     const data = await this.otpRepository.findOne({
       where: { email: payload.email, service: 'VerifyAccount' },
       order: { createdAt: 'DESC' },
@@ -65,7 +51,6 @@ export class OtpService {
       where: { email: email, service: service },
       order: { createdAt: 'DESC' },
     });
-    // console.log({ otpData });
 
     return otpData;
   }

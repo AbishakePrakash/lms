@@ -28,6 +28,11 @@ export class AuthController {
     return this.authService.signin(signInCred);
   }
 
+  @Post('v2')
+  signinV2(@Body() signInCred: SignInCred) {
+    return this.authService.signInv2(signInCred);
+  }
+
   // @Post('mail')
   // sendMail() {
   //   return this.authService.sendMail();

@@ -10,7 +10,6 @@ import {
   Request,
   UseInterceptors,
   UploadedFile,
-  BadRequestException,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -29,15 +28,20 @@ import { ReturnData } from 'src/utils/globalValues';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  // @Post()
+  // create(@Body() createUserDto: CreateUserDto) {
+  //   return this.usersService.create(createUserDto);
+  // }
+
   @Post()
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto);
+  createV2(@Body() createUserDto: CreateUserDto) {
+    return this.usersService.createV2(createUserDto);
   }
 
   @Post('image')
   @UseGuards(AuthGuard)
   @UseInterceptors(FileInterceptor('file'))
-  @ApiConsumes('multipart/form-data') // Specifies the content type for the request
+  @ApiConsumes('multipart/form-data')
   @ApiBody({
     description: 'Upload an image file',
     required: true,

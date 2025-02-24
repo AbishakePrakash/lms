@@ -1,7 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateUserDto {
-  @ApiProperty({ description: 'Username of the user', example: 'JK' })
+  // @ApiProperty({
+  //   description: 'Username of the user',
+  //   // example: 'JK'
+  // })
   username: string;
 
   @ApiProperty({
@@ -12,13 +15,16 @@ export class CreateUserDto {
 
   role: string;
 
-  @ApiProperty({
-    description: 'Phone number of the user',
-    example: '9876543210',
-  })
+  // @ApiProperty({
+  //   description: 'Phone number of the user',
+  //   // example: '9876543210',
+  // })
   phone: string;
 
-  @ApiProperty({ description: 'Age of the user', example: '25' })
+  // @ApiProperty({
+  //   description: 'Age of the user',
+  //   // example: '25'
+  // })
   age: string;
 
   @ApiProperty({

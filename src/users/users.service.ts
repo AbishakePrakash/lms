@@ -16,18 +16,10 @@ import {
 import triggerMaileEvent from 'src/utils/nodeMailer';
 import { uploadToS3 } from 'src/utils/awsBucket';
 
-import * as fs from 'fs';
-import * as path from 'path';
-import {
-  BadRequestException,
-  ForbiddenException,
-  Inject,
-  Injectable,
-  InternalServerErrorException,
-  MisdirectedException,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
+import { redirect } from 'next/dist/server/api-utils';
+import { error } from 'console';
+import { Otp } from 'src/otp/entities/otp.entity';
 
 @Injectable()
 export class UsersService {
@@ -36,8 +28,6 @@ export class UsersService {
     private readonly usersRepo: Repository<Users>,
     @Inject(OtpService)
     private readonly otpService: OtpService,
-    // @Inject(WalletService)
-    // private readonly walletService: WalletService,
   ) {}
 
   async sendMail(mailData: MailData) {
@@ -49,7 +39,6 @@ export class UsersService {
         returnData.error = false;
         returnData.message = 'Success';
         returnData.value = data;
-        // returnData.value = parseInt(status);
       }
     } catch (error) {
       console.log('Error sending mail: ', error);
@@ -66,95 +55,124 @@ export class UsersService {
     return randomNum;
   }
 
-  async create(createUserDto: CreateUserDto) {
-    const returnData = new ReturnData();
-    const mailData = new MailData();
-    createUserDto.isActive = false;
-    const sender = process.env.HQ_SENDER;
-    const saltRounds = process.env.SALT_ROUNDS;
-    const currentDate = new Date();
-    const formattedDate = currentDate.toLocaleDateString('en-US', {
-      month: 'short', // "Feb"
-      day: '2-digit', // "12"
-      year: 'numeric', // "2025"
-    });
+  async createV2(createUserDto: CreateUserDto): Promise<ReturnData> {
+    return new Promise(async (resolve) => {
+      var userRepository = this.usersRepo;
+      var otpServiceX = this.otpService;
+      var otpGen = this.generateSixDigitNumber;
+      var triggerMail = this.sendMail;
 
-    // console.log({ saltRounds });
-    const otp = this.generateSixDigitNumber();
+      const saltRounds = process.env.SALT_ROUNDS;
+      console.log({ saltRounds });
 
-    //Check duplicate
-    const duplicate = await this.usersRepo.findOneBy({
-      email: createUserDto.email,
-    });
+      const mailData = new MailData();
+      const currentDate = new Date();
 
-    if (duplicate) {
-      returnData.error = true;
-      returnData.message = 'Email already exists';
-      return returnData;
-      // throw new BadRequestException('Email already exists');
-    }
-
-    await bcrypt
-      .hash(createUserDto.password, parseInt(saltRounds))
-      .then((data) => {
-        createUserDto.password = data;
-      });
-
-    try {
-      const data = await this.usersRepo.save(createUserDto);
-      if (!data) {
-        returnData.error = true;
-        returnData.message = 'User creating process failed';
-        return returnData;
-        // throw new InternalServerErrorException('User creating process failed');
+      // Check Inputs
+      async function checkInputs(createUserDto: CreateUserDto) {
+        if (
+          createUserDto.email !== undefined &&
+          createUserDto.password !== undefined
+        ) {
+          // Hashing Password
+          await bcrypt
+            .hash(createUserDto.password, parseInt(saltRounds))
+            .then((data) => {
+              createUserDto.password = data;
+            });
+          return createUserDto;
+        } else {
+          throw 'Missing Inputs';
+        }
       }
-      const { password, ...user } = data;
 
-      const otpData: OtpDto = {
-        userId: user.id,
-        email: createUserDto.email,
-        otp: otp,
-        service: 'VerifyAccount',
-      };
+      // Check Duplication
+      async function checkDuplication(email: string) {
+        const duplicate = await userRepository.findOneBy({
+          email: createUserDto.email,
+        });
+
+        if (duplicate) {
+          throw 'Email already exists';
+        } else {
+          return email;
+        }
+      }
+
+      // Create User
+      async function createUser(createUserDto: CreateUserDto) {
+        const user = await userRepository.save(createUserDto);
+        if (!user) {
+          throw 'Creating User failed';
+        } else {
+          return user;
+        }
+      }
+
+      // Create and Save OTP
+      async function deliverOtp(user: Users) {
+        const otpData: OtpDto = {
+          userId: user.id,
+          email: user.email,
+          otp: otpGen(),
+          service: 'VerifyAccount',
+        };
+        const createdOtp = await otpServiceX.saveOtp(otpData);
+        if (createdOtp) {
+          return createdOtp;
+        } else {
+          throw 'Otp not saved';
+        }
+      }
+
+      // Send Mail
+      async function sendEmail(otpResponse: Otp, user: Users) {
+        const sender = process.env.HQ_SENDER;
+        const formattedDate = currentDate.toLocaleDateString('en-US', {
+          month: 'short',
+          day: '2-digit',
+          year: 'numeric',
+        });
+
+        const mailContents: MailContents = {
+          date: formattedDate,
+          username: user.username || 'User',
+          task: 'verify your Account',
+          validity: '5 minutes',
+          otp: otpResponse.otp,
+        };
+
+        // Structuring Mail
+        mailData.from = sender;
+        mailData.to = user.email;
+        mailData.subject = 'Verify Account';
+        mailData.html = emailTemplate(mailContents);
+
+        const mailResponse = await triggerMail(mailData);
+        if (!mailResponse.error) {
+          return mailResponse;
+        } else {
+          throw 'Mail sending failed';
+        }
+      }
 
       try {
-        const verify = await this.otpService.saveOtp(otpData);
-        if (!verify) {
-          returnData.error = true;
-          returnData.message = 'OTP saving failed';
-          return returnData;
-          // throw new InternalServerErrorException('OTP saving failed');
-        }
-        try {
-          const mailContents: MailContents = {
-            date: formattedDate,
-            username: createUserDto.username,
-            task: 'verify your Account',
-            validity: '5 minutes',
-            otp: otp,
-          };
+        const checkedInputs = await checkInputs(createUserDto);
+        const checkDuplicationRes = await checkDuplication(checkedInputs.email);
+        const newUser = await createUser(checkedInputs);
+        const savedOtp = await deliverOtp(newUser);
+        const emailResponse = await sendEmail(savedOtp, newUser);
 
-          mailData.from = sender;
-          mailData.to = createUserDto.email;
-          mailData.subject = 'Verify Account';
-          mailData.html = emailTemplate(mailContents);
-          await this.sendMail(mailData);
-        } catch (error) {
-          console.log({ error });
-          throw error;
-          // throw new InternalServerErrorException("OTP didn't sent to user");
-        }
+        resolve({
+          error: false,
+          value: { email: newUser.email, redirectTo: 'VerificationPage' },
+          message: 'Success',
+        });
       } catch (error) {
         console.log({ error });
+        resolve({ error: true, value: null, message: error });
       }
-      returnData.error = false;
-      returnData.message = 'Success';
-      returnData.value = user;
-      return returnData;
-    } catch (error) {
-      console.log({ error });
-      throw error;
-    }
+    });
   }
 
   async uploadFile(file: Express.Multer.File, user: Users) {
@@ -163,12 +181,6 @@ export class UsersService {
 
     try {
       const { buffer, originalname, mimetype } = file;
-
-      // console.log({
-      //   buffer: buffer,
-      //   originalname: originalname,
-      //   mimetype: mimetype,
-      // });
 
       const s3Url = await uploadToS3(
         buffer,
@@ -181,7 +193,6 @@ export class UsersService {
         returnData.error = true;
         returnData.message = 'No url returned from S3';
         return returnData;
-        // throw new InternalServerErrorException('No url returned from S3');
       }
       console.log('File uploaded:', s3Url);
 
@@ -211,7 +222,6 @@ export class UsersService {
       returnData.error = true;
       returnData.message = 'Incorrect OTP';
       return returnData;
-      // throw new UnauthorizedException('Incorrect OTP');
     }
 
     // Update status
@@ -237,7 +247,6 @@ export class UsersService {
       returnData.error = true;
       returnData.message = 'User not allowed to promote as Instructor';
       return returnData;
-      // throw new ForbiddenException('User not allowed to promote as Instructor');
     }
 
     try {
@@ -246,7 +255,6 @@ export class UsersService {
         returnData.error = true;
         returnData.message = 'Promotion failed';
         return returnData;
-        // throw new MisdirectedException('Promotion failed');
       }
       returnData.error = false;
       returnData.message = 'Success';
@@ -266,7 +274,6 @@ export class UsersService {
         returnData.error = true;
         returnData.message = 'No users found';
         return returnData;
-        // throw new NotFoundException('No users found');
       }
       returnData.error = false;
       returnData.message = 'Success';
@@ -287,7 +294,6 @@ export class UsersService {
         returnData.error = true;
         returnData.message = 'No user found for this userId';
         return returnData;
-        // throw new NotFoundException('No user found for this userId');
       }
       returnData.error = false;
       returnData.message = 'Success';
@@ -326,7 +332,6 @@ export class UsersService {
         returnData.error = true;
         returnData.message = 'User update failed';
         return returnData;
-        // throw new MisdirectedException('User update failed');
       }
       returnData.error = false;
       returnData.message = 'Success';
@@ -348,7 +353,6 @@ export class UsersService {
         returnData.error = true;
         returnData.message = 'User deletion failed';
         return returnData;
-        // throw new MisdirectedException('User deletion failed');
       }
       returnData.error = false;
       returnData.message = 'Success';
