@@ -17,8 +17,6 @@ import triggerMaileEvent from 'src/utils/nodeMailer';
 import { uploadToS3 } from 'src/utils/awsBucket';
 
 import { Inject, Injectable } from '@nestjs/common';
-import { redirect } from 'next/dist/server/api-utils';
-import { error } from 'console';
 import { Otp } from 'src/otp/entities/otp.entity';
 
 @Injectable()
