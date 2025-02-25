@@ -28,6 +28,11 @@ export class CommentsController {
     return this.commentsService.create(createCommentDto, req.user);
   }
 
+  @Post('v2')
+  createV2(@Body() createCommentDto: CreateCommentDto, @Request() req) {
+    return this.commentsService.createV2(createCommentDto, req.user);
+  }
+
   @Get()
   findAll() {
     return this.commentsService.findAll();

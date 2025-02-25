@@ -114,11 +114,6 @@ export class AuthService {
       // Verify Password
       async function passwordVerify(payloadPass: string, dbPass: string) {
         const matched = await bcrypt.compare(payloadPass, dbPass);
-        console.log({
-          matched: matched,
-          payloadPass: payloadPass,
-          dbPass: dbPass,
-        });
 
         if (matched) {
           return true;
@@ -179,7 +174,6 @@ export class AuthService {
       try {
         const checkedInputs = await checkInputs(signinCred);
         const checkedUser = await checkUser(signinCred.email);
-        console.log({ checkedUser });
 
         if (!checkedUser.isActive) {
           const savedOtp = await deliverOtp(checkedUser);
@@ -191,8 +185,8 @@ export class AuthService {
           });
         } else {
           const passwordMatches = await passwordVerify(
-            checkedUser.password,
             signinCred.password,
+            checkedUser.password,
           );
           const token = await tokenGen(checkedUser);
 

@@ -24,4 +24,11 @@ export class CreateAnswerDto {
     example: 'This is an example answer to the question.',
   })
   answer: string;
+
+  @ApiProperty({
+    description: 'HTML Content',
+    example: '<p>RichText Content.</p>',
+    required: false,
+  })
+  richText: string;
 }

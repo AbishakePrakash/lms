@@ -23,20 +23,15 @@ import { ApiTags } from '@nestjs/swagger';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post()
-  signin(@Body() signInCred: SignInCred) {
-    return this.authService.signin(signInCred);
-  }
+  // @Post('v0')
+  // signin(@Body() signInCred: SignInCred) {
+  //   return this.authService.signin(signInCred);
+  // }
 
-  @Post('v2')
+  @Post('signIn')
   signinV2(@Body() signInCred: SignInCred) {
     return this.authService.signInv2(signInCred);
   }
-
-  // @Post('mail')
-  // sendMail() {
-  //   return this.authService.sendMail();
-  // }
 
   @Post('forgotPassword')
   forgotPassword(@Body() payload: ForgotPasswordPayload) {

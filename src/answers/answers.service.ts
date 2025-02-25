@@ -14,6 +14,9 @@ import { FindByParentDto } from 'src/comments/dto/findByParent.dto';
 import { Question } from 'src/question/entities/question.entity';
 import { Users } from 'src/users/entities/user.entity';
 import { ReturnData } from 'src/utils/globalValues';
+import { CreateAnswerPayload } from './dto/create-answer.payLoad';
+import { CreateQuestionPayload } from 'src/question/dto/create-question.dto copy';
+import { purifyHtml } from 'src/utils/sanitizeHtml';
 
 @Injectable()
 export class AnswersService {
@@ -52,17 +55,137 @@ export class AnswersService {
     }
   }
 
+  async createV2(
+    createAnswerDto: CreateAnswerDto,
+    user: Users,
+  ): Promise<ReturnData> {
+    return new Promise(async (resolve) => {
+      var answersRepositoryX = this.answersRepository;
+      var questionRepositoryX = this.questionRepository;
+
+      // Check Inputs
+      async function checkInputs(createAnswerDto: CreateAnswerDto) {
+        if (
+          createAnswerDto.answer !== undefined &&
+          // createAnswerDto.tags !== undefined &&
+          createAnswerDto.questionId !== undefined
+        ) {
+          return true;
+        } else {
+          throw 'Missing Inputs';
+        }
+      }
+
+      // Check Availability
+      async function checkQuestion(questionId: number) {
+        try {
+          const question = await questionRepositoryX.findOneBy({ questionId });
+          if (question) {
+            return true;
+          } else {
+            throw 'No question found for this Id';
+          }
+        } catch (error) {
+          throw 'No question found for this Id';
+        }
+      }
+
+      // Html Sanitizing
+      async function sanitizeRichText(richText: string) {
+        if (!richText) return '';
+
+        const sanitizedRichText = purifyHtml(richText);
+
+        if (sanitizedRichText) {
+          return sanitizedRichText;
+        } else {
+          throw 'Richtext Sanitization Failed';
+        }
+      }
+
+      // Create Answer
+      async function postAnswer(createAnswerPayload: CreateAnswerPayload) {
+        const postedAnswer = await answersRepositoryX.save(createAnswerPayload);
+
+        if (postedAnswer) {
+          return postedAnswer;
+        } else {
+          throw 'Answer posting failed';
+        }
+      }
+
+      // Update count in QuestionRepository
+      async function updateAnswerCount(questionId: number) {
+        const targetQuestion = await questionRepositoryX.findOneBy({
+          questionId: questionId,
+        });
+
+        const response = await questionRepositoryX.update(questionId, {
+          answersCount: targetQuestion.answersCount + 1,
+        });
+
+        if (response && response.affected === 1) {
+          return true;
+        } else {
+          throw 'Answer count updating failed';
+        }
+      }
+
+      try {
+        const checkedInputs = await checkInputs(createAnswerDto);
+
+        const sanitizedRichText = await sanitizeRichText(
+          createAnswerDto.richText,
+        );
+        const checkAvailability = await checkQuestion(
+          createAnswerDto.questionId,
+        );
+
+        const payLoad: CreateAnswerPayload = {
+          userId: user.id,
+          email: user.email,
+          questionId: createAnswerDto.questionId,
+          answer: createAnswerDto.answer,
+          richText: sanitizedRichText,
+        };
+        const postAnswerRes: Answer = await postAnswer(payLoad);
+        const updateAnswerCountRes = await updateAnswerCount(
+          postAnswerRes.questionId,
+        );
+
+        resolve({
+          error: false,
+          value: postAnswerRes,
+          message: 'Success',
+        });
+      } catch (error) {
+        console.log({ error });
+        resolve({ error: true, value: null, message: error });
+      }
+    });
+  }
+
   async updateAnswerCount(questionId: number, process: string) {
     const targetQuestion = await this.questionRepository.findOneBy({
       questionId: questionId,
     });
 
-    await this.questionRepository.update(questionId, {
+    if (!targetQuestion) {
+      return null;
+    }
+
+    const response = await this.questionRepository.update(questionId, {
       answersCount:
         process === 'create'
           ? targetQuestion.answersCount + 1
           : targetQuestion.answersCount - 1,
     });
+
+    if (response && response.affected === 1) {
+      return true;
+    } else {
+      return null;
+    }
   }
 
   async findAll() {

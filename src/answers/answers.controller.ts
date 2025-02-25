@@ -27,6 +27,11 @@ export class AnswersController {
     return this.answersService.create(createAnswerDto, req.user);
   }
 
+  @Post('v2')
+  createV2(@Body() createAnswerDto: CreateAnswerDto, @Request() req) {
+    return this.answersService.createV2(createAnswerDto, req.user);
+  }
+
   @Get()
   findAll() {
     return this.answersService.findAll();

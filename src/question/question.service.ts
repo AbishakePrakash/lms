@@ -9,6 +9,8 @@ import { CreateQuestionDto } from './dto/create-question.dto';
 import { UpdateQuestionDto } from './dto/update-question.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Question } from './entities/question.entity';
+import { Answer } from 'src/answers/entities/answer.entity';
+import { Comment } from 'src/comments/entities/comment.entity';
 import { Repository } from 'typeorm';
 import { UpdateUserDto } from 'src/users/dto/update-user.dto';
 import { CommentsService } from 'src/comments/comments.service';
@@ -19,6 +21,7 @@ import { purifyHtml } from 'src/utils/sanitizeHtml';
 import { uploadToS3 } from 'src/utils/awsBucket';
 import { ReturnData } from 'src/utils/globalValues';
 import * as sanitizeHtml from 'sanitize-html';
+import { CreateQuestionPayload } from './dto/create-question.dto copy';
 
 @Injectable()
 export class QuestionService {
@@ -132,6 +135,123 @@ export class QuestionService {
     //   console.error('Error uploading file:', error.message);
     //   return 'File upload failed!';
     // }
+  }
+
+  async createV2(
+    createQuestionDto: CreateQuestionDto,
+    user: Users,
+  ): Promise<ReturnData> {
+    return new Promise(async (resolve) => {
+      var questionRepositoryX = this.questionRepository;
+
+      // Check Inputs
+      async function checkInputs(createQuestionDto: CreateQuestionDto) {
+        if (
+          createQuestionDto.title !== undefined &&
+          // createQuestionDto.tags !== undefined &&
+          createQuestionDto.richText !== undefined
+        ) {
+          return true;
+        } else {
+          throw 'Missing Inputs';
+        }
+      }
+
+      // Html Sanitizing
+      async function sanitizeRichText(richText: string) {
+        const sanitizedRichText = purifyHtml(richText);
+
+        if (sanitizedRichText) {
+          return sanitizedRichText;
+        } else {
+          throw 'Richtext Sanitization Failed';
+        }
+      }
+
+      // Parse Tags
+      async function parsifyTags(tags: string) {
+        if (tags !== undefined) {
+          const parsifiedTags = tags.split(',');
+
+          if (parsifiedTags.length > 0) {
+            return parsifiedTags;
+          } else {
+            throw 'Tags Parsifying Failed';
+          }
+        } else {
+          return [];
+        }
+      }
+
+      // Create Question
+      async function createNewQuestion(payLoad: CreateQuestionPayload) {
+        const question = await questionRepositoryX.save(payLoad);
+
+        if (question) {
+          return question;
+        } else {
+          throw 'Question not created';
+        }
+      }
+
+      // // Send Mail
+      // async function sendEmail(otpResponse: Otp, user: Users) {
+      //   const sender = process.env.HQ_SENDER;
+
+      //   const mailContents: MailContents = {
+      //     date: formattedDate,
+      //     username: user.username || 'User',
+      //     task: 'verify your Account',
+      //     validity: '5 minutes',
+      //     otp: otpResponse.otp,
+      //   };
+
+      //   // Structuring Mail
+      //   mailData.from = sender;
+      //   mailData.to = user.email;
+      //   mailData.subject = 'Verify Account';
+      //   mailData.html = emailTemplate(mailContents);
+
+      //   const mailResponse = await triggerMail(mailData);
+      //   if (!mailResponse.error) {
+      //     return mailResponse;
+      //   } else {
+      //     throw 'Mail sending failed';
+      //   }
+      // }
+
+      // // Generate JWT_Token
+      // async function tokenGen(user: Users) {
+      //   const { password, ...data } = user;
+      //   const token = await jwtServiceX.signAsync(data);
+      //   return token;
+      // }
+
+      try {
+        const checkedInputs = await checkInputs(createQuestionDto);
+        const sanitizedRichText = await sanitizeRichText(
+          createQuestionDto.richText,
+        );
+        const parsifiedTags = await parsifyTags(createQuestionDto.tags);
+        const payLoad: CreateQuestionPayload = {
+          title: createQuestionDto.title,
+          richText: sanitizedRichText,
+          tags: parsifiedTags,
+          email: user.email,
+          userId: user.id,
+        };
+        const createQuestionRes: Question = await createNewQuestion(payLoad);
+
+        resolve({
+          error: false,
+          value: createQuestionRes,
+          message: 'Success',
+        });
+      } catch (error) {
+        console.log({ error });
+        resolve({ error: true, value: null, message: error });
+      }
+    });
   }
 
   async experiment(
@@ -294,6 +414,41 @@ export class QuestionService {
     }
   }
 
+  async findAllV2() {
+    return new Promise(async (resolve) => {
+      var questionRepositoryX = this.questionRepository;
+
+      // Fetch All Questions
+      async function fetchAll() {
+        try {
+          const questions = await questionRepositoryX.find();
+
+          if (questions.length !== 0) {
+            return questions;
+          } else {
+            throw 'No questions found';
+          }
+        } catch (error) {
+          console.log({ error });
+          throw error;
+        }
+      }
+
+      try {
+        const questions = await fetchAll();
+
+        resolve({
+          error: false,
+          value: questions,
+          message: 'Success',
+        });
+      } catch (error) {
+        console.log({ error });
+        resolve({ error: true, value: null, message: error });
+      }
+    });
+  }
+
   async findOne(id: number) {
     const returnData = new ReturnData();
     try {
@@ -349,6 +504,127 @@ export class QuestionService {
     } catch (error) {
       console.log({ error });
     }
+  }
+
+  async findOneV2(id: number) {
+    return new Promise(async (resolve) => {
+      var questionRepositoryX = this.questionRepository;
+      var answersServiceX = this.answersService;
+      var commentsServiceX = this.commentsService;
+
+      // Fetch Target Question
+      async function fetchOne(id: number) {
+        try {
+          const question = await questionRepositoryX.findOneBy({
+            questionId: id,
+          });
+          if (question) {
+            return question;
+          } else {
+            throw 'No questions found for this Id';
+          }
+        } catch (error) {
+          console.log({ error });
+          throw error;
+        }
+      }
+
+      //Fetch Answers
+      async function fetchAnswers(questionId: number) {
+        try {
+          const answers = await answersServiceX.findbyParent(questionId);
+
+          if (answers.length !== 0) {
+            return answers;
+          } else {
+            return [];
+          }
+        } catch (error) {
+          console.log({ error });
+          throw error;
+        }
+      }
+
+      //Fetch Comments for Answers
+      async function fetchAnswerComments() {
+        try {
+          const answerComments = await commentsServiceX.findbyAnswer();
+          if (answerComments.length !== 0) {
+            return answerComments;
+          } else {
+            return [];
+          }
+        } catch (error) {
+          console.log({ error });
+          throw error;
+        }
+      }
+
+      //Append Comments to Answers
+      function appendComments(answers: Answer[], answersComments: Comment[]) {
+        if (answersComments.length === 0) return [];
+
+        const answersWithComments = answers.map((answer) => {
+          const commentsForAnswer = answersComments.filter(
+            (comment) => comment.parentId === answer.answerId,
+          );
+
+          return {
+            ...answer,
+            comments: commentsForAnswer,
+          };
+        });
+
+        if (answersWithComments.length !== 0) {
+          return answersWithComments;
+        } else {
+          throw 'Appendind Comments failed';
+        }
+      }
+
+      //Fetch Comments for Question
+      async function fetchQuestionComments(questionId: number) {
+        const fetchBody: FindByParentDto = {
+          parentId: questionId,
+          parentType: 'question',
+        };
+        try {
+          const questionComments =
+            await commentsServiceX.findbyParent(fetchBody);
+          if (questionComments.length !== 0) {
+            return questionComments;
+          } else {
+            return [];
+          }
+        } catch (error) {
+          console.log({ error });
+          throw error;
+        }
+      }
+
+      try {
+        const question = await fetchOne(id);
+        const answers = await fetchAnswers(question.questionId);
+        const answerComments = await fetchAnswerComments();
+        const answersWithComments = appendComments(answers, answerComments);
+        const questionComments = await fetchQuestionComments(
+          question.questionId,
+        );
+
+        resolve({
+          error: false,
+          value: {
+            ...question,
+            answers: answersWithComments,
+            comments: questionComments,
+          },
+          message: 'Success',
+        });
+      } catch (error) {
+        console.log({ error });
+        resolve({ error: true, value: null, message: error });
+      }
+    });
   }
 
   async update(id: number, updateQuestionDto: UpdateQuestionDto) {
@@ -449,6 +725,56 @@ export class QuestionService {
     } catch (error) {}
   }
 
+  async upVoteV2(id: number) {
+    return new Promise(async (resolve) => {
+      var questionRepositoryX = this.questionRepository;
+
+      // Check Availability
+      async function checkQuestion(questionId: number) {
+        try {
+          const question = await questionRepositoryX.findOneBy({ questionId });
+          if (question) {
+            return question;
+          } else {
+            throw 'No question found for this Id';
+          }
+        } catch (error) {
+          throw 'No question found for this Id';
+        }
+      }
+
+      // Cast vote
+      async function increaseVote(question: Question) {
+        try {
+          const updatedRows = await questionRepositoryX.update(id, {
+            upvote: question.upvote + 1,
+          });
+          if (updatedRows.affected === 1) {
+            return true;
+          } else {
+            throw 'No vote posted';
+          }
+        } catch (error) {
+          throw 'No vote posted';
+        }
+      }
+
+      try {
+        const checkedQuestion = await checkQuestion(id);
+        const makeVote = await increaseVote(checkedQuestion);
+
+        resolve({
+          error: false,
+          value: null,
+          message: 'Success',
+        });
+      } catch (error) {
+        console.log({ error });
+        resolve({ error: true, value: null, message: error });
+      }
+    });
+  }
+
   async downVote(id: number) {
     const returnData = new ReturnData();
     const checkAvailability = await this.questionRepository.findOneBy({
@@ -471,5 +797,55 @@ export class QuestionService {
       returnData.value = { updatedRows: updatedRows.affected };
       return returnData;
     } catch (error) {}
+  }
+
+  async downVoteV2(id: number) {
+    return new Promise(async (resolve) => {
+      var questionRepositoryX = this.questionRepository;
+
+      // Check Availability
+      async function checkQuestion(questionId: number) {
+        try {
+          const question = await questionRepositoryX.findOneBy({ questionId });
+          if (question) {
+            return question;
+          } else {
+            throw 'No question found for this Id';
+          }
+        } catch (error) {
+          throw 'No question found for this Id';
+        }
+      }
+
+      // Cast vote
+      async function increaseVote(question: Question) {
+        try {
+          const updatedRows = await questionRepositoryX.update(id, {
+            downvote: question.downvote + 1,
+          });
+          if (updatedRows.affected === 1) {
+            return true;
+          } else {
+            throw 'No vote posted';
+          }
+        } catch (error) {
+          throw 'No vote posted';
+        }
+      }
+
+      try {
+        const checkedQuestion = await checkQuestion(id);
+        const makeVote = await increaseVote(checkedQuestion);
+
+        resolve({
+          error: false,
+          value: null,
+          message: 'Success',
+        });
+      } catch (error) {
+        console.log({ error });
+        resolve({ error: true, value: null, message: error });
+      }
+    });
   }
 }

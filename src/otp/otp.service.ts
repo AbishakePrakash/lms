@@ -26,9 +26,9 @@ export class OtpService {
   }
 
   // helper
-  async verifyAccount(payload: VerifyAccountPayload) {
+  async verifyAccount(verifyAccountPayload: VerifyAccountPayload) {
     const data = await this.otpRepository.findOne({
-      where: { email: payload.email, service: 'VerifyAccount' },
+      where: { email: verifyAccountPayload.email, service: 'VerifyAccount' },
       order: { createdAt: 'DESC' },
     });
 
@@ -36,14 +36,14 @@ export class OtpService {
       return null;
     }
 
-    //Prod
+    //Prod-Env
     const expiryTime = new Date(data.createdAt).getTime() + 300000;
     const currentTime = new Date().getTime();
     // if (currentTime > expiryTime) {
     //   throw new RequestTimeoutException('Otp Expired');
     // }
 
-    return data.otp === payload.otp;
+    return data.otp === verifyAccountPayload.otp;
   }
 
   async getOtp(email: string, service: string) {

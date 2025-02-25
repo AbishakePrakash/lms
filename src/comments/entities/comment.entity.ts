@@ -18,6 +18,9 @@ export class Comment {
   email: string;
 
   @Column()
+  username: string;
+
+  @Column()
   parentType: string;
 
   @Column()

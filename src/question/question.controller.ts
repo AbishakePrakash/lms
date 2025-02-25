@@ -27,55 +27,69 @@ import { CreateQuestionWithFileDto } from './dto/create-question_v2.dto';
 export class QuestionController {
   constructor(private readonly questionService: QuestionService) {}
 
-  // @Post()
+  // @Post('v0')
   // @UseGuards(AuthGuard)
-  // create(@Body() createQuestionDto: CreateQuestionDto, @Request() req) {
-  //   return this.questionService.create(createQuestionDto, req.user);
+  // @UseInterceptors(FileInterceptor('file'))
+  // @ApiConsumes('multipart/form-data')
+  // @ApiBody({
+  //   description: 'Upload an image file with question details',
+  //   type: CreateQuestionDto,
+  // })
+  // create(
+  //   // @UploadedFile() file: Express.Multer.File,
+  //   @Body() createQuestionDto: CreateQuestionDto,
+  //   @Request() req,
+  // ) {
+  //   // if (!file) {
+  //   //  throw new BadRequestException('No file uploaded');
+  //   // }
+  //   return this.questionService.create(
+  //     createQuestionDto,
+  //     req.user,
+  //     // file
+  //   );
+  // }
+
+  // @Get('vo')
+  // findAll() {
+  //   return this.questionService.findAll();
+  // }
+
+  // @Get('v0/:id')
+  // findOne(@Param('id') id: string) {
+  //   return this.questionService.findOne(+id);
+  // }
+
+  // @Post('upVote/v0/:id')
+  // upVote(@Param('id') id: string) {
+  //   return this.questionService.upVote(+id);
+  // }
+
+  // @Post('downVote/v0/:id')
+  // downVote(@Param('id') id: string) {
+  //   return this.questionService.downVote(+id);
   // }
 
   @Post()
   @UseGuards(AuthGuard)
   @UseInterceptors(FileInterceptor('file'))
-  @ApiConsumes('multipart/form-data') // Specifies the content type for the request
+  @ApiConsumes('multipart/form-data')
   @ApiBody({
     description: 'Upload an image file with question details',
-    type: CreateQuestionDto, // Uses the DTO directly
-  })
-  create(
-    // @UploadedFile() file: Express.Multer.File,
-    @Body() createQuestionDto: CreateQuestionDto,
-    @Request() req,
-  ) {
-    // if (!file) {
-    //  throw new BadRequestException('No file uploaded');
-    // }
-    return this.questionService.create(
-      createQuestionDto,
-      req.user,
-      // file
-    );
-  }
-
-  @Post('new')
-  @UseGuards(AuthGuard)
-  @UseInterceptors(FileInterceptor('file'))
-  @ApiConsumes('multipart/form-data') // Specifies the content type for the request
-  @ApiBody({
-    description: 'Upload an image file with question details',
-    type: CreateQuestionDto, // Uses the DTO directly
+    type: CreateQuestionDto,
   })
   createNew(@Body() createQuestionDto: CreateQuestionDto, @Request() req) {
-    return this.questionService.experiment(createQuestionDto, req.user);
+    return this.questionService.createV2(createQuestionDto, req.user);
   }
 
   @Get()
-  findAll() {
-    return this.questionService.findAll();
+  findAllV2() {
+    return this.questionService.findAllV2();
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.questionService.findOne(+id);
+  findOneV2(@Param('id') id: string) {
+    return this.questionService.findOneV2(+id);
   }
 
   @Patch(':id')
@@ -92,12 +106,12 @@ export class QuestionController {
   }
 
   @Post('upVote/:id')
-  upVote(@Param('id') id: string) {
-    return this.questionService.upVote(+id);
+  upVoteV2(@Param('id') id: string) {
+    return this.questionService.upVoteV2(+id);
   }
 
   @Post('downVote/:id')
-  downVote(@Param('id') id: string) {
-    return this.questionService.downVote(+id);
+  downVoteV2(@Param('id') id: string) {
+    return this.questionService.downVoteV2(+id);
   }
 }

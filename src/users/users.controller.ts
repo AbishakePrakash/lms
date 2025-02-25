@@ -33,9 +33,54 @@ export class UsersController {
   //   return this.usersService.create(createUserDto);
   // }
 
+  // @Post('verifyAccountV0')
+  // verifyAccount(@Body() payload: VerifyAccountPayload) {
+  //   return this.usersService.setAsActive(payload);
+  // }
+
+  // @Get('v0')
+  // @UseGuards(AuthGuard)
+  // findAll() {
+  //   return this.usersService.findAll();
+  // }
+
+  // @Get('v0/:id')
+  // @UseGuards(AdminGuard)
+  // findOne(@Param('id') id: string) {
+  //   return this.usersService.findOne(+id);
+  // }
+
   @Post()
   createV2(@Body() createUserDto: CreateUserDto) {
     return this.usersService.createV2(createUserDto);
+  }
+
+  @Post('verifyAccount')
+  verifyAccountV2(@Body() payload: VerifyAccountPayload) {
+    return this.usersService.verifyAccountV2(payload);
+  }
+  @Get()
+  @UseGuards(AuthGuard)
+  findAllV2() {
+    return this.usersService.findAllV2();
+  }
+
+  @Get(':id')
+  @UseGuards(AdminGuard)
+  findOneV2(@Param('id') id: string) {
+    return this.usersService.findOneV2(+id);
+  }
+
+  @Get('profile')
+  @UseGuards(AdminGuard)
+  getProfile(@Request() req) {
+    return req.user;
+  }
+
+  @Post('assign/:id')
+  @UseGuards(AdminGuard)
+  assign(@Param('id') id: string) {
+    return this.usersService.assign(+id);
   }
 
   @Post('image')
@@ -64,34 +109,6 @@ export class UsersController {
       // throw new BadRequestException('No file uploaded');
     }
     return await this.usersService.uploadFile(file, req.user);
-  }
-
-  @Post('verifyAccount')
-  verifyAccount(@Body() payload: VerifyAccountPayload) {
-    return this.usersService.setAsActive(payload);
-  }
-
-  @Get()
-  @UseGuards(AuthGuard)
-  findAll() {
-    return this.usersService.findAll();
-  }
-  @Get('profile')
-  @UseGuards(AdminGuard)
-  getProfile(@Request() req) {
-    return req.user;
-  }
-
-  @Get(':id')
-  @UseGuards(AdminGuard)
-  findOne(@Param('id') id: string) {
-    return this.usersService.findOne(+id);
-  }
-
-  @Post('assign/:id')
-  @UseGuards(AdminGuard)
-  assign(@Param('id') id: string) {
-    return this.usersService.assign(+id);
   }
 
   @Patch(':id')

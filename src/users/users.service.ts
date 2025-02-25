@@ -28,31 +28,6 @@ export class UsersService {
     private readonly otpService: OtpService,
   ) {}
 
-  async sendMail(mailData: MailData) {
-    const returnData = new ReturnData();
-    try {
-      const data = await triggerMaileEvent(mailData);
-      const status = data.split(' ')[0];
-      if (status === '250') {
-        returnData.error = false;
-        returnData.message = 'Success';
-        returnData.value = data;
-      }
-    } catch (error) {
-      console.log('Error sending mail: ', error);
-      returnData.error = true;
-      returnData.message = 'Mail sending failed';
-      return returnData;
-      // throw new Error('Mail sending failed');
-    }
-    return returnData;
-  }
-
-  generateSixDigitNumber() {
-    const randomNum = Math.floor(Math.random() * 900000) + 100000;
-    return randomNum;
-  }
-
   async createV2(createUserDto: CreateUserDto): Promise<ReturnData> {
     return new Promise(async (resolve) => {
       var userRepository = this.usersRepo;
@@ -77,6 +52,7 @@ export class UsersService {
             .hash(createUserDto.password, parseInt(saltRounds))
             .then((data) => {
               createUserDto.password = data;
+              console.log('Hashed: ', data);
             });
           return createUserDto;
         } else {
@@ -173,65 +149,171 @@ export class UsersService {
     });
   }
 
-  async uploadFile(file: Express.Multer.File, user: Users) {
-    const returnData = new ReturnData();
-    const path = process.env.AWS_BUCKET_PATH;
+  async verifyAccountV2(
+    verifyAccountPayload: VerifyAccountPayload,
+  ): Promise<ReturnData> {
+    return new Promise(async (resolve) => {
+      var usersRepositoryX = this.usersRepo;
+      var otpServiceX = this.otpService;
 
-    try {
-      const { buffer, originalname, mimetype } = file;
-
-      const s3Url = await uploadToS3(
-        buffer,
-        originalname,
-        mimetype,
-        `${path}/profile`,
-      );
-
-      if (!s3Url) {
-        returnData.error = true;
-        returnData.message = 'No url returned from S3';
-        return returnData;
+      // Check Inputs
+      async function checkInputs(verifyAccountPayload: VerifyAccountPayload) {
+        if (
+          verifyAccountPayload.email !== undefined &&
+          verifyAccountPayload !== undefined
+        ) {
+          return verifyAccountPayload;
+        } else {
+          throw 'Missing Inputs';
+        }
       }
-      console.log('File uploaded:', s3Url);
 
-      const updateProfile = await this.usersRepo.update(user.id, {
-        profilePicture: s3Url,
-      });
-      returnData.error = false;
-      returnData.message = 'Success';
-      returnData.value = { ...updateProfile, s3Url: s3Url };
-      return returnData;
-    } catch (error) {
-      console.error('Error uploading file:', error.message);
-      throw error;
-    }
+      // Check Availability
+      async function checkUser(email: string) {
+        try {
+          const user = await usersRepositoryX.findOneBy({ email: email });
+          if (user) {
+            return user;
+          } else {
+            throw 'No user found for this Id';
+          }
+        } catch (error) {
+          throw 'No user found for this Id';
+        }
+      }
+
+      // Verify OTP
+      async function verifyOtp(verifyAccountPayload: VerifyAccountPayload) {
+        try {
+          const verifyOtp =
+            await otpServiceX.verifyAccount(verifyAccountPayload);
+          if (verifyOtp) {
+            return true;
+          } else {
+            throw 'Incorrect OTP';
+          }
+        } catch (error) {
+          throw 'Incorrect OTP';
+        }
+      }
+
+      // Update status in UsersRepository
+      async function updateStatus(userId: number) {
+        const statusUpdated = await usersRepositoryX.update(userId, {
+          isActive: true,
+        });
+
+        if (statusUpdated && statusUpdated.affected === 1) {
+          return true;
+        } else {
+          throw 'Status updating failed';
+        }
+      }
+
+      // Clear OTP / OTP's
+      async function cleatOtp(email: string) {
+        const removeOtpRes = await otpServiceX.remove(email, 'VerifyAccount');
+
+        if (removeOtpRes) {
+          return removeOtpRes;
+        } else {
+          throw 'OTP not removed';
+        }
+      }
+
+      try {
+        const checkedInputs = await checkInputs(verifyAccountPayload);
+        const checkedUser = await checkUser(checkedInputs.email);
+        const isVerified = await verifyOtp(checkedInputs);
+        const isStatusUpdated = await updateStatus(checkedUser.id);
+        if (isVerified && isStatusUpdated) {
+          const clearOtpRes = await cleatOtp(checkedUser.email);
+
+          resolve({
+            error: false,
+            value: checkedUser.email,
+            message: 'Success',
+          });
+        } else {
+          resolve({ error: true, value: null, message: 'Flow broke' });
+        }
+      } catch (error) {
+        console.log({ error });
+        resolve({ error: true, value: null, message: error });
+      }
+    });
   }
 
-  async setAsActive(payload: VerifyAccountPayload) {
-    const returnData = new ReturnData();
-    const user = await this.findOneByEmail(payload.email);
-    if (!user) {
-      returnData.error = true;
-      returnData.message = 'No account registered with thie email Id';
-      return returnData;
-    }
-    const verifyOtp = await this.otpService.verifyAccount(payload);
-    if (!verifyOtp) {
-      returnData.error = true;
-      returnData.message = 'Incorrect OTP';
-      return returnData;
-    }
+  async findAllV2() {
+    return new Promise(async (resolve) => {
+      var usersRepositoryX = this.usersRepo;
 
-    // Update status
-    await this.update(user.id, { isActive: true });
+      // Fetch All Users
+      async function fetchAll() {
+        try {
+          const users = await usersRepositoryX.find();
 
-    // Clear OTP's
-    await this.otpService.remove(payload.email, 'VerifyAccount');
+          if (users.length !== 0) {
+            return users;
+          } else {
+            throw 'No users found';
+          }
+        } catch (error) {
+          console.log({ error });
+          throw error;
+        }
+      }
 
-    returnData.error = false;
-    returnData.message = 'Success';
-    returnData.value = user.email;
-    return returnData;
+      try {
+        const users = await fetchAll();
+
+        resolve({
+          error: false,
+          value: users,
+          message: 'Success',
+        });
+      } catch (error) {
+        console.log({ error });
+        resolve({ error: true, value: null, message: error });
+      }
+    });
+  }
+
+  async findOneV2(id: number) {
+    return new Promise(async (resolve) => {
+      var usersRepositoryX = this.usersRepo;
+
+      // Fetch User
+      async function fetchOne(id: number) {
+        try {
+          const user = await usersRepositoryX.findOneBy({
+            id: id,
+          });
+          if (user) {
+            return user;
+          } else {
+            throw 'No user found for this Id';
+          }
+        } catch (error) {
+          console.log({ error });
+          throw error;
+        }
+      }
+
+      try {
+        const user = await fetchOne(id);
+
+        resolve({
+          error: false,
+          value: user,
+
+          message: 'Success',
+        });
+      } catch (error) {
+        console.log({ error });
+        resolve({ error: true, value: null, message: error });
+      }
+    });
   }
 
   async assign(id: number) {
@@ -264,60 +346,92 @@ export class UsersService {
     }
   }
 
-  async findAll() {
-    const returnData = new ReturnData();
-    try {
-      const data = await this.usersRepo.find();
-      if (data.length === 0) {
-        returnData.error = true;
-        returnData.message = 'No users found';
-        return returnData;
+  async assignV2(id: number) {
+    return new Promise(async (resolve) => {
+      var usersRepositoryX = this.usersRepo;
+
+      // Check Role
+      async function checkRole(id: number) {
+        try {
+          const user = await usersRepositoryX.findOneBy({
+            id: id,
+          });
+          if (user) {
+            return user;
+          } else {
+            throw 'No user found for this Id';
+          }
+        } catch (error) {
+          console.log({ error });
+          throw error;
+        }
       }
-      returnData.error = false;
-      returnData.message = 'Success';
-      returnData.value = data;
-      return returnData;
-    } catch (error) {
-      console.log(error);
-      throw error;
-    }
-  }
 
-  async findOne(id: number) {
-    const returnData = new ReturnData();
-
-    try {
-      const user = await this.usersRepo.findOneBy({ id });
-      if (!user) {
-        returnData.error = true;
-        returnData.message = 'No user found for this userId';
-        return returnData;
+      // Fetch User
+      async function fetchOne(id: number) {
+        try {
+          const user = await usersRepositoryX.findOneBy({
+            id: id,
+          });
+          if (user) {
+            return user;
+          } else {
+            throw 'No user found for this Id';
+          }
+        } catch (error) {
+          console.log({ error });
+          throw error;
+        }
       }
-      returnData.error = false;
-      returnData.message = 'Success';
-      returnData.value = user;
-      return returnData;
-    } catch (error) {
-      console.log(error);
-      throw error;
-    }
-  }
 
-  // helper
-  async findOneByEmail(email: string) {
-    const user = await this.usersRepo.findOne({
-      where: { email },
-      select: [
-        'id',
-        'username',
-        'email',
-        'password',
-        'role',
-        'isActive',
-        'profilePicture',
-      ],
+      try {
+        const user = await fetchOne(id);
+
+        resolve({
+          error: false,
+          value: user,
+
+          message: 'Success',
+        });
+      } catch (error) {
+        console.log({ error });
+        resolve({ error: true, value: null, message: error });
+      }
     });
-    return user;
+  }
+
+  async uploadFile(file: Express.Multer.File, user: Users) {
+    const returnData = new ReturnData();
+    const path = process.env.AWS_BUCKET_PATH;
+
+    try {
+      const { buffer, originalname, mimetype } = file;
+
+      const s3Url = await uploadToS3(
+        buffer,
+        originalname,
+        mimetype,
+        `${path}/profile`,
+      );
+
+      if (!s3Url) {
+        returnData.error = true;
+        returnData.message = 'No url returned from S3';
+        return returnData;
+      }
+      console.log('File uploaded:', s3Url);
+
+      const updateProfile = await this.usersRepo.update(user.id, {
+        profilePicture: s3Url,
+      });
+      returnData.error = false;
+      returnData.message = 'Success';
+      returnData.value = { ...updateProfile, s3Url: s3Url };
+      return returnData;
+    } catch (error) {
+      console.error('Error uploading file:', error.message);
+      throw error;
+    }
   }
 
   async update(id: number, updateUserDto: UpdateUserDto) {
@@ -358,6 +472,206 @@ export class UsersService {
       return returnData;
     } catch (error) {
       console.error('Error deleting User:', error);
+      throw error;
+    }
+  }
+
+  // helper
+  async findOneByEmail(email: string) {
+    const user = await this.usersRepo.findOne({
+      where: { email },
+      select: [
+        'id',
+        'username',
+        'email',
+        'password',
+        'role',
+        'isActive',
+        'profilePicture',
+      ],
+    });
+    return user;
+  }
+
+  async sendMail(mailData: MailData) {
+    const returnData = new ReturnData();
+    try {
+      const data = await triggerMaileEvent(mailData);
+      const status = data.split(' ')[0];
+      if (status === '250') {
+        returnData.error = false;
+        returnData.message = 'Success';
+        returnData.value = data;
+      }
+    } catch (error) {
+      console.log('Error sending mail: ', error);
+      returnData.error = true;
+      returnData.message = 'Mail sending failed';
+      return returnData;
+      // throw new Error('Mail sending failed');
+    }
+    return returnData;
+  }
+
+  generateSixDigitNumber() {
+    const randomNum = Math.floor(Math.random() * 900000) + 100000;
+    return randomNum;
+  }
+
+  // Left out Methods
+  async create(createUserDto: CreateUserDto) {
+    const returnData = new ReturnData();
+    const mailData = new MailData();
+    createUserDto.isActive = false;
+    const sender = process.env.HQ_SENDER;
+    const saltRounds = process.env.SALT_ROUNDS;
+    const currentDate = new Date();
+    const formattedDate = currentDate.toLocaleDateString('en-US', {
+      month: 'short', // "Feb"
+      day: '2-digit', // "12"
+      year: 'numeric', // "2025"
+    });
+
+    // console.log({ saltRounds });
+    const otp = this.generateSixDigitNumber();
+
+    //Check duplicate
+    const duplicate = await this.usersRepo.findOneBy({
+      email: createUserDto.email,
+    });
+
+    if (duplicate) {
+      returnData.error = true;
+      returnData.message = 'Email already exists';
+      return returnData;
+      // throw new BadRequestException('Email already exists');
+    }
+
+    await bcrypt
+      .hash(createUserDto.password, parseInt(saltRounds))
+      .then((data) => {
+        createUserDto.password = data;
+      });
+
+    try {
+      const data = await this.usersRepo.save(createUserDto);
+      if (!data) {
+        returnData.error = true;
+        returnData.message = 'User creating process failed';
+        return returnData;
+        // throw new InternalServerErrorException('User creating process failed');
+      }
+      const { password, ...user } = data;
+
+      const otpData: OtpDto = {
+        userId: user.id,
+        email: createUserDto.email,
+        otp: otp,
+        service: 'VerifyAccount',
+      };
+
+      try {
+        const verify = await this.otpService.saveOtp(otpData);
+        if (!verify) {
+          returnData.error = true;
+          returnData.message = 'OTP saving failed';
+          return returnData;
+          // throw new InternalServerErrorException('OTP saving failed');
+        }
+        try {
+          const mailContents: MailContents = {
+            date: formattedDate,
+            username: createUserDto.username,
+            task: 'verify your Account',
+            validity: '5 minutes',
+            otp: otp,
+          };
+
+          mailData.from = sender;
+          mailData.to = createUserDto.email;
+          mailData.subject = 'Verify Account';
+          mailData.html = emailTemplate(mailContents);
+          await this.sendMail(mailData);
+        } catch (error) {
+          console.log({ error });
+          throw error;
+          // throw new InternalServerErrorException("OTP didn't sent to user");
+        }
+      } catch (error) {
+        console.log({ error });
+      }
+      returnData.error = false;
+      returnData.message = 'Success';
+      returnData.value = user;
+      return returnData;
+    } catch (error) {
+      console.log({ error });
+      throw error;
+    }
+  }
+
+  async verifyAccount(payload: VerifyAccountPayload) {
+    const returnData = new ReturnData();
+    const user = await this.findOneByEmail(payload.email);
+    if (!user) {
+      returnData.error = true;
+      returnData.message = 'No account registered with thie email Id';
+      return returnData;
+    }
+    const verifyOtp = await this.otpService.verifyAccount(payload);
+    if (!verifyOtp) {
+      returnData.error = true;
+      returnData.message = 'Incorrect OTP';
+      return returnData;
+    }
+
+    // Update status
+    await this.update(user.id, { isActive: true });
+
+    // Clear OTP's
+    await this.otpService.remove(payload.email, 'VerifyAccount');
+
+    returnData.error = false;
+    returnData.message = 'Success';
+    returnData.value = user.email;
+    return returnData;
+  }
+
+  async findAll() {
+    const returnData = new ReturnData();
+    try {
+      const data = await this.usersRepo.find();
+      if (data.length === 0) {
+        returnData.error = true;
+        returnData.message = 'No users found';
+        return returnData;
+      }
+      returnData.error = false;
+      returnData.message = 'Success';
+      returnData.value = data;
+      return returnData;
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
+  }
+
+  async findOne(id: number) {
+    const returnData = new ReturnData();
+
+    try {
+      const user = await this.usersRepo.findOneBy({ id });
+      if (!user) {
+        returnData.error = true;
+        returnData.message = 'No user found for this userId';
+        return returnData;
+      }
+      returnData.error = false;
+      returnData.message = 'Success';
+      returnData.value = user;
+      return returnData;
+    } catch (error) {
+      console.log(error);
       throw error;
     }
   }

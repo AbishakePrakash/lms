@@ -20,6 +20,9 @@ export class Answer {
   @Column()
   answer: string;
 
+  @Column({ default: '', nullable: true, type: 'text' })
+  richText: string;
+
   @Column({ default: 0 })
   commentsCount: number;
 

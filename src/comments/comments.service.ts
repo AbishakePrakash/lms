@@ -17,6 +17,7 @@ import { CreateAnswerDto } from 'src/answers/dto/create-answer.dto';
 import { FindByParentDto } from './dto/findByParent.dto';
 import { Users } from 'src/users/entities/user.entity';
 import { ReturnData } from 'src/utils/globalValues';
+import { CreateCommentPayload } from './dto/create-comment.payload';
 
 @Injectable()
 export class CommentsService {
@@ -80,6 +81,147 @@ export class CommentsService {
       console.log({ error });
       throw error;
     }
+  }
+
+  async createV2(
+    createCommentDto: CreateCommentDto,
+    user: Users,
+  ): Promise<ReturnData> {
+    return new Promise(async (resolve) => {
+      var answerRepositoryX = this.answerRepository;
+      var questionRepositoryX = this.questionRepository;
+      var commentRepositoryX = this.commentRepository;
+
+      // Check Inputs
+      async function checkInputs(createCommentDto: CreateCommentDto) {
+        if (
+          createCommentDto.parentId !== undefined &&
+          createCommentDto.parentType !== undefined &&
+          createCommentDto.comment !== undefined
+        ) {
+          return createCommentDto;
+        } else {
+          throw 'Missing Inputs';
+        }
+      }
+
+      // Check Availability
+      async function checkParent(checkedInputs: CreateCommentDto) {
+        try {
+          if (createCommentDto.parentType === 'question') {
+            const checkAvailability = await questionRepositoryX.findOneBy({
+              questionId: createCommentDto.parentId,
+            });
+            if (checkAvailability) {
+              return checkAvailability;
+            } else {
+              throw 'No Question found for this Question Id';
+            }
+          } else if (createCommentDto.parentType === 'answer') {
+            const checkAvailability = await answerRepositoryX.findOneBy({
+              answerId: createCommentDto.parentId,
+            });
+            if (checkAvailability) {
+              return checkAvailability;
+            } else {
+              throw 'No Answer found for this Answer Id';
+            }
+          } else {
+            throw 'Invalid parentType';
+          }
+        } catch (error) {
+          throw error;
+        }
+      }
+
+      // Create Answer
+      async function postComment(
+        createCommentPayload: CreateCommentPayload,
+      ): Promise<Comment> {
+        const postedComment =
+          await commentRepositoryX.save(createCommentPayload);
+
+        if (postedComment) {
+          return postedComment;
+        } else {
+          throw 'Comment posting failed';
+        }
+      }
+
+      // Update Comments count in Question
+      async function updateQuestionCount(targetQuestion: Question) {
+        try {
+          const updatedQuestion = await questionRepositoryX.update(
+            targetQuestion.questionId,
+            {
+              commentsCount: targetQuestion.commentsCount + 1,
+            },
+          );
+          if (updatedQuestion) {
+            return updatedQuestion;
+          } else {
+            throw 'Question Table not updated';
+          }
+        } catch (error) {
+          console.log({ error });
+          throw error;
+        }
+      }
+
+      // Update Comments count in Answer
+      async function updateAnswerCount(targetAnswer: Answer) {
+        try {
+          const updatedAnswer = await answerRepositoryX.update(
+            targetAnswer.answerId,
+            {
+              commentsCount: targetAnswer.commentsCount + 1,
+            },
+          );
+          if (updatedAnswer) {
+            return updatedAnswer;
+          } else {
+            throw 'Answer table not updated';
+          }
+        } catch (error) {
+          console.log({ error });
+          throw error;
+        }
+      }
+
+      try {
+        const checkedInputs = await checkInputs(createCommentDto);
+        const checkedParent = await checkParent(checkedInputs);
+
+        const createCommentPayload: CreateCommentPayload = {
+          userId: user.id,
+          email: user.email,
+          username: user.username || `User${String(user.id).padStart(5, '0')}`,
+          parentType: checkedInputs.parentType,
+          parentId: checkedInputs.parentId,
+          comment: checkedInputs.comment,
+        };
+
+        const postCommentRes = await postComment(createCommentPayload);
+        if (postCommentRes.parentType === 'question') {
+          const updatedQuestionRes = await updateQuestionCount(
+            checkedParent as Question,
+          );
+        } else {
+          const updatedAnswerRes = await updateAnswerCount(
+            checkedParent as Answer,
+          );
+        }
+
+        resolve({
+          error: false,
+          value: postCommentRes,
+          message: 'Success',
+        });
+      } catch (error) {
+        console.log({ error });
+        resolve({ error: true, value: null, message: error });
+      }
+    });
   }
 
   async updateAnswerCount(id: number, process: string) {
@@ -195,7 +337,6 @@ export class CommentsService {
     return comments;
   }
 
-  //  Check - where it got used
   async findbyAnswer() {
     const comments = await this.commentRepository.find({
       where: {
