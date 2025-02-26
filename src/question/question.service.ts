@@ -170,8 +170,8 @@ export class QuestionService {
 
       // Parse Tags
       async function parsifyTags(tags: string) {
-        if (tags !== undefined) {
-          const parsifiedTags = tags.split(',');
+        if (tags !== undefined && tags.length > 0) {
+          const parsifiedTags = tags?.split(',');
 
           if (parsifiedTags.length > 0) {
             return parsifiedTags;
@@ -229,10 +229,13 @@ export class QuestionService {
 
       try {
         const checkedInputs = await checkInputs(createQuestionDto);
+        console.log({ createQuestionDto });
+
         const sanitizedRichText = await sanitizeRichText(
           createQuestionDto.richText,
         );
         const parsifiedTags = await parsifyTags(createQuestionDto.tags);
+
         const payLoad: CreateQuestionPayload = {
           title: createQuestionDto.title,
           richText: sanitizedRichText,
@@ -562,7 +565,7 @@ export class QuestionService {
 
       //Append Comments to Answers
       function appendComments(answers: Answer[], answersComments: Comment[]) {
-        if (answersComments.length === 0) return [];
+        if (answersComments.length === 0) return answers;
 
         const answersWithComments = answers.map((answer) => {
           const commentsForAnswer = answersComments.filter(
@@ -605,8 +608,14 @@ export class QuestionService {
       try {
         const question = await fetchOne(id);
         const answers = await fetchAnswers(question.questionId);
+        console.log({ answers });
+
         const answerComments = await fetchAnswerComments();
+        console.log({ answerComments });
+
         const answersWithComments = appendComments(answers, answerComments);
+        console.log({ answersWithComments });
+
         const questionComments = await fetchQuestionComments(
           question.questionId,
         );
