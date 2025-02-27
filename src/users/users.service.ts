@@ -36,7 +36,6 @@ export class UsersService {
       var triggerMail = this.sendMail;
 
       const saltRounds = process.env.SALT_ROUNDS;
-      console.log({ saltRounds });
 
       const mailData = new MailData();
       const currentDate = new Date();
@@ -52,7 +51,6 @@ export class UsersService {
             .hash(createUserDto.password, parseInt(saltRounds))
             .then((data) => {
               createUserDto.password = data;
-              console.log('Hashed: ', data);
             });
           return createUserDto;
         } else {
