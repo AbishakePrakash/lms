@@ -18,6 +18,7 @@ import { FindByParentDto } from './dto/findByParent.dto';
 import { Users } from 'src/users/entities/user.entity';
 import { ReturnData } from 'src/utils/globalValues';
 import { CreateCommentPayload } from './dto/create-comment.payload';
+import * as moment from 'moment';
 
 @Injectable()
 export class CommentsService {
@@ -29,59 +30,6 @@ export class CommentsService {
     @InjectRepository(Question)
     private readonly questionRepository: Repository<Question>,
   ) {}
-
-  async create(createCommentDto: CreateCommentDto, user: Users) {
-    const returnData = new ReturnData();
-
-    if (createCommentDto.parentType === 'question') {
-      const checkAvailability = await this.questionRepository.findOneBy({
-        questionId: createCommentDto.parentId,
-      });
-      if (!checkAvailability) {
-        returnData.error = true;
-        returnData.message = 'No question found for this Parent Id';
-        return returnData;
-      }
-    } else if (createCommentDto.parentType === 'answer') {
-      const checkAvailability = await this.answerRepository.findOneBy({
-        answerId: createCommentDto.parentId,
-      });
-      if (!checkAvailability) {
-        returnData.error = true;
-        returnData.message = 'No answer found for this Parent Id';
-        return returnData;
-      }
-    } else {
-      returnData.error = true;
-      returnData.message = 'Invalid parentType';
-      return returnData;
-    }
-
-    const payLoad = { ...createCommentDto, email: user.email, userId: user.id };
-
-    try {
-      const comments = await this.commentRepository.save(payLoad);
-      if (!comments) {
-        returnData.error = true;
-        returnData.message = 'Comment not posted';
-        return returnData;
-      }
-
-      if (createCommentDto.parentType === 'question') {
-        await this.updateQuestionCount(createCommentDto.parentId, 'create');
-      } else if (createCommentDto.parentType === 'answer') {
-        await this.updateAnswerCount(createCommentDto.parentId, 'create');
-      }
-
-      returnData.error = false;
-      returnData.message = 'Success';
-      returnData.value = comments;
-      return returnData;
-    } catch (error) {
-      console.log({ error });
-      throw error;
-    }
-  }
 
   async createV2(
     createCommentDto: CreateCommentDto,
@@ -189,19 +137,25 @@ export class CommentsService {
       }
 
       try {
+        const epoch = moment().valueOf();
+        console.log({ epoch });
+
         const checkedInputs = await checkInputs(createCommentDto);
         const checkedParent = await checkParent(checkedInputs);
 
         const createCommentPayload: CreateCommentPayload = {
           userId: user.id,
           email: user.email,
-          username: user.username || `User${String(user.id).padStart(5, '0')}`,
           parentType: checkedInputs.parentType,
           parentId: checkedInputs.parentId,
           comment: checkedInputs.comment,
+          createdAtV2: moment().valueOf().toString(),
+          updatedAtV2: moment().valueOf().toString(),
         };
 
         const postCommentRes = await postComment(createCommentPayload);
+        console.log({ postCommentRes });
+
         if (postCommentRes.parentType === 'question') {
           const updatedQuestionRes = await updateQuestionCount(
             checkedParent as Question,
@@ -224,65 +178,6 @@ export class CommentsService {
     });
   }
 
-  async updateAnswerCount(id: number, process: string) {
-    const returnData = new ReturnData();
-    const targetAnswer = await this.answerRepository.findOneBy({
-      answerId: id,
-    });
-
-    // console.log({ targetAnswer });
-
-    // return targetAnswer;
-
-    try {
-      const updatedAnswer = await this.answerRepository.update(
-        targetAnswer.answerId,
-        {
-          commentsCount:
-            process === 'create'
-              ? targetAnswer.commentsCount + 1
-              : targetAnswer.commentsCount - 1,
-        },
-      );
-      if (!updatedAnswer) {
-        returnData.error = true;
-        returnData.message = 'Answer count not updated';
-        return returnData;
-
-        // throw new NotFoundException('Answer not found');
-      }
-    } catch (error) {
-      console.log({ error });
-      throw error;
-    }
-  }
-
-  async updateQuestionCount(id: number, process: string) {
-    const returnData = new ReturnData();
-
-    const targetQuestion = await this.questionRepository.findOneBy({
-      questionId: id,
-    });
-
-    try {
-      const updatedQuestion = await this.questionRepository.update(id, {
-        commentsCount:
-          process === 'create'
-            ? targetQuestion.commentsCount + 1
-            : targetQuestion.commentsCount - 1,
-      });
-      if (!updatedQuestion) {
-        returnData.error = true;
-        returnData.message = 'Question count not updated';
-        return returnData;
-        // throw new NotFoundException('Question not found');
-      }
-    } catch (error) {
-      console.log({ error });
-      throw error;
-    }
-  }
-
   async findAll() {
     const returnData = new ReturnData();
     try {
@@ -294,6 +189,7 @@ export class CommentsService {
         return returnData;
         // throw new NotFoundException('No comments found');
       }
+
       returnData.error = false;
       returnData.message = 'Success';
       returnData.value = comments;
@@ -316,6 +212,7 @@ export class CommentsService {
         return returnData;
         // throw new NotFoundException('No comment found for this ID');
       }
+
       returnData.error = false;
       returnData.message = 'Success';
       returnData.value = comment;
@@ -327,28 +224,9 @@ export class CommentsService {
     }
   }
 
-  async findbyParent(payLoad: FindByParentDto) {
-    const comments = await this.commentRepository.find({
-      where: {
-        parentId: payLoad.parentId,
-        parentType: payLoad.parentType,
-      },
-    });
-    return comments;
-  }
-
-  async findbyAnswer() {
-    const comments = await this.commentRepository.find({
-      where: {
-        parentType: 'answer',
-      },
-    });
-    return comments;
-  }
-
   async update(id: number, updateCommentDto: UpdateCommentDto) {
     const returnData = new ReturnData();
-
+    updateCommentDto.updatedAtV2 = moment().valueOf().toString();
     const checkAvailability = await this.commentRepository.findOneBy({
       commentId: id,
     });
@@ -439,6 +317,7 @@ export class CommentsService {
     try {
       const updatedRows = await this.commentRepository.update(id, {
         likes: checkAvailability.likes + 1,
+        updatedAtV2: moment().valueOf().toString(),
       });
       returnData.error = false;
       returnData.message = 'Success';
@@ -450,16 +329,157 @@ export class CommentsService {
     }
   }
 
-  // async commentsCount(parentId: number) {
-  //   try {
-  //     const commentsCount = await this.commentRepository.countBy({ parentId });
-  //     if (commentsCount === 0) {
-  //       // throw new NotFoundException('No comments found');
-  //     }
-  //     return commentsCount;
-  //   } catch (error) {
-  //     console.log({ error });
-  //     throw error;
-  //   }
-  // }
+  // helper
+  async findbyParent(payLoad: FindByParentDto) {
+    const comments = await this.commentRepository.find({
+      where: {
+        parentId: payLoad.parentId,
+        parentType: payLoad.parentType,
+      },
+    });
+    comments?.map((item) => {
+      item.createdAtV2 = new Date(Number(item.createdAtV2)).toString();
+      item.updatedAtV2 = new Date(Number(item.updatedAtV2)).toString();
+    });
+    return comments;
+  }
+
+  async findbyAnswer() {
+    const comments = await this.commentRepository.find({
+      where: {
+        parentType: 'answer',
+      },
+    });
+    comments?.map((item) => {
+      item.createdAtV2 = new Date(Number(item.createdAtV2)).toString();
+      item.updatedAtV2 = new Date(Number(item.updatedAtV2)).toString();
+    });
+    return comments;
+  }
+
+  async updateAnswerCount(id: number, process: string) {
+    const returnData = new ReturnData();
+    const targetAnswer = await this.answerRepository.findOneBy({
+      answerId: id,
+    });
+
+    // console.log({ targetAnswer });
+
+    // return targetAnswer;
+
+    try {
+      const updatedAnswer = await this.answerRepository.update(
+        targetAnswer.answerId,
+        {
+          commentsCount:
+            process === 'create'
+              ? targetAnswer.commentsCount + 1
+              : targetAnswer.commentsCount - 1,
+        },
+      );
+      if (!updatedAnswer) {
+        returnData.error = true;
+        returnData.message = 'Answer count not updated';
+        return returnData;
+
+        // throw new NotFoundException('Answer not found');
+      }
+    } catch (error) {
+      console.log({ error });
+      throw error;
+    }
+  }
+
+  async updateQuestionCount(id: number, process: string) {
+    const returnData = new ReturnData();
+
+    const targetQuestion = await this.questionRepository.findOneBy({
+      questionId: id,
+    });
+
+    try {
+      const updatedQuestion = await this.questionRepository.update(id, {
+        commentsCount:
+          process === 'create'
+            ? targetQuestion.commentsCount + 1
+            : targetQuestion.commentsCount - 1,
+      });
+      if (!updatedQuestion) {
+        returnData.error = true;
+        returnData.message = 'Question count not updated';
+        return returnData;
+        // throw new NotFoundException('Question not found');
+      }
+    } catch (error) {
+      console.log({ error });
+      throw error;
+    }
+  }
+
+  //Left-out Methods
+  async create(createCommentDto: CreateCommentDto, user: Users) {
+    const returnData = new ReturnData();
+
+    if (createCommentDto.parentType === 'question') {
+      const checkAvailability = await this.questionRepository.findOneBy({
+        questionId: createCommentDto.parentId,
+      });
+      if (!checkAvailability) {
+        returnData.error = true;
+        returnData.message = 'No question found for this Parent Id';
+        return returnData;
+      }
+    } else if (createCommentDto.parentType === 'answer') {
+      const checkAvailability = await this.answerRepository.findOneBy({
+        answerId: createCommentDto.parentId,
+      });
+      if (!checkAvailability) {
+        returnData.error = true;
+        returnData.message = 'No answer found for this Parent Id';
+        return returnData;
+      }
+    } else {
+      returnData.error = true;
+      returnData.message = 'Invalid parentType';
+      return returnData;
+    }
+
+    const payLoad = { ...createCommentDto, email: user.email, userId: user.id };
+
+    try {
+      const comments = await this.commentRepository.save(payLoad);
+      if (!comments) {
+        returnData.error = true;
+        returnData.message = 'Comment not posted';
+        return returnData;
+      }
+
+      if (createCommentDto.parentType === 'question') {
+        await this.updateQuestionCount(createCommentDto.parentId, 'create');
+      } else if (createCommentDto.parentType === 'answer') {
+        await this.updateAnswerCount(createCommentDto.parentId, 'create');
+      }
+
+      returnData.error = false;
+      returnData.message = 'Success';
+      returnData.value = comments;
+      return returnData;
+    } catch (error) {
+      console.log({ error });
+      throw error;
+    }
+  }
+
+  async commentsCount(parentId: number) {
+    try {
+      const commentsCount = await this.commentRepository.countBy({ parentId });
+      if (commentsCount === 0) {
+        // throw new NotFoundException('No comments found');
+      }
+      return commentsCount;
+    } catch (error) {
+      console.log({ error });
+      throw error;
+    }
+  }
 }

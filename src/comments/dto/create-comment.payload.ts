@@ -3,8 +3,6 @@ import { ApiProperty } from '@nestjs/swagger';
 export class CreateCommentPayload {
   userId: number;
 
-  username: string;
-
   email: string;
 
   parentType: string;
@@ -12,4 +10,8 @@ export class CreateCommentPayload {
   parentId: number;
 
   comment: string;
+
+  createdAtV2: string;
+
+  updatedAtV2: string;
 }

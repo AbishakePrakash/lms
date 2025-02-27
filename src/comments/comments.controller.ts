@@ -24,11 +24,6 @@ export class CommentsController {
   constructor(private readonly commentsService: CommentsService) {}
 
   @Post()
-  create(@Body() createCommentDto: CreateCommentDto, @Request() req) {
-    return this.commentsService.create(createCommentDto, req.user);
-  }
-
-  @Post('v2')
   createV2(@Body() createCommentDto: CreateCommentDto, @Request() req) {
     return this.commentsService.createV2(createCommentDto, req.user);
   }
@@ -57,6 +52,11 @@ export class CommentsController {
   likes(@Param('id') id: string) {
     return this.commentsService.likes(+id);
   }
+
+  // @Post('v0')
+  // create(@Body() createCommentDto: CreateCommentDto, @Request() req) {
+  //   return this.commentsService.create(createCommentDto, req.user);
+  // }
 
   // @Post('parent/:id')
   // findByParent(@Body() payLoad: FindByParentDto) {

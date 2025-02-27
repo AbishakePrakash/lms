@@ -42,18 +42,37 @@ export class UsersService {
       const currentDate = new Date();
 
       // Check Inputs
+      // async function checkInputs(createUserDto: CreateUserDto) {
+      //   if (
+      //     createUserDto.email !== undefined &&
+      //     createUserDto.password !== undefined
+      //   ) {
+      //     // Hashing Password
+      //     await bcrypt
+      //       .hash(createUserDto.password, parseInt(saltRounds))
+      //       .then((data) => {
+      //         createUserDto.password = data;
+      //         console.log('Hashed: ', data);
+      //       });
+      //     return createUserDto;
+      //   } else {
+      //     throw 'Missing Inputs';
+      //   }
+      // }
+
+      // Check Inputs
+
       async function checkInputs(createUserDto: CreateUserDto) {
         if (
           createUserDto.email !== undefined &&
           createUserDto.password !== undefined
         ) {
           // Hashing Password
-          await bcrypt
-            .hash(createUserDto.password, parseInt(saltRounds))
-            .then((data) => {
-              createUserDto.password = data;
-              console.log('Hashed: ', data);
-            });
+          createUserDto.password = await bcrypt.hash(
+            createUserDto.password,
+            parseInt(saltRounds),
+          );
+
           return createUserDto;
         } else {
           throw 'Missing Inputs';
@@ -63,7 +82,7 @@ export class UsersService {
       // Check Duplication
       async function checkDuplication(email: string) {
         const duplicate = await userRepository.findOneBy({
-          email: createUserDto.email,
+          email: email,
         });
 
         if (duplicate) {
@@ -83,13 +102,28 @@ export class UsersService {
         }
       }
 
+      // Check whether Otp already exists
+      async function checkDuplicateOtp() {
+        let newOtp: number;
+        let isExists: boolean;
+        do {
+          newOtp = otpGen();
+          isExists = await otpServiceX.checkOtp(newOtp);
+        } while (isExists);
+        return newOtp;
+      }
+
       // Create and Save OTP
-      async function deliverOtp(user: Users) {
+      async function deliverOtp(
+        user: Users,
+        uniqueOtp: number,
+        serviceName: string,
+      ) {
         const otpData: OtpDto = {
           userId: user.id,
           email: user.email,
-          otp: otpGen(),
-          service: 'VerifyAccount',
+          otp: uniqueOtp,
+          service: serviceName,
         };
         const createdOtp = await otpServiceX.saveOtp(otpData);
         if (createdOtp) {
@@ -134,7 +168,8 @@ export class UsersService {
         const checkedInputs = await checkInputs(createUserDto);
         const checkDuplicationRes = await checkDuplication(checkedInputs.email);
         const newUser = await createUser(checkedInputs);
-        const savedOtp = await deliverOtp(newUser);
+        const uniqueOtp = await checkDuplicateOtp();
+        const savedOtp = await deliverOtp(newUser, uniqueOtp, 'VerifyAccount');
         const emailResponse = await sendEmail(savedOtp, newUser);
 
         resolve({

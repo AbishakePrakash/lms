@@ -17,9 +17,6 @@ export class Comment {
   @Column()
   email: string;
 
-  @Column({ nullable: true })
-  username: string;
-
   @Column()
   parentType: string;
 
@@ -29,14 +26,17 @@ export class Comment {
   @Column()
   comment: string;
 
-  //   @Column('int', { array: true, default: null })
-  //   comments: number[];
-
   @Column({ default: 0 })
   likes: number;
 
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;
+
+  @Column({ nullable: true })
+  createdAtV2: string;
+
+  @Column({ nullable: true })
+  updatedAtV2: string;
 
   @UpdateDateColumn({ type: 'timestamp' })
   updatedAt: Date;
