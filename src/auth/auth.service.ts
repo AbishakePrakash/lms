@@ -103,12 +103,9 @@ export class AuthService {
       // Check User
       async function checkUser(email: string) {
         const user = await usersServiceX.findOneByEmail(email);
-        console.log({ user });
 
         if (!user) {
           throw 'User not exists';
-        } else if (!user.isActive) {
-          throw 'User not verified';
         } else {
           return user;
         }
