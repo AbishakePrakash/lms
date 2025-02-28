@@ -22,12 +22,12 @@ import { AuthGuard } from 'src/auth/guard/authguard';
 export class AnswersController {
   constructor(private readonly answersService: AnswersService) {}
 
-  @Post()
-  create(@Body() createAnswerDto: CreateAnswerDto, @Request() req) {
-    return this.answersService.create(createAnswerDto, req.user);
-  }
+  // @Post('v0')
+  // create(@Body() createAnswerDto: CreateAnswerDto, @Request() req) {
+  //   return this.answersService.create(createAnswerDto, req.user);
+  // }
 
-  @Post('v2')
+  @Post()
   createV2(@Body() createAnswerDto: CreateAnswerDto, @Request() req) {
     return this.answersService.createV2(createAnswerDto, req.user);
   }

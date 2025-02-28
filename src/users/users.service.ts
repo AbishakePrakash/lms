@@ -38,7 +38,6 @@ export class UsersService {
       var triggerMail = this.sendMail;
 
       const saltRounds = process.env.SALT_ROUNDS;
-      console.log({ saltRounds });
 
       const mailData = new MailData();
       const currentDate = new Date();

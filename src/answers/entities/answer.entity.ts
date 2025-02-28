@@ -17,6 +17,9 @@ export class Answer {
   @Column()
   userId: number;
 
+  @Column({ nullable: true })
+  email: string;
+
   @Column()
   answer: string;
 
