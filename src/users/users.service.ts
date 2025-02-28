@@ -105,13 +105,13 @@ export class UsersService {
 
       // Check whether Otp already exists
       async function checkDuplicateOtp() {
-        // let newOtp: number;
-        // let isExists: boolean;
-        // do {
-        //   newOtp = otpGen();
-        //   isExists = await otpServiceX.checkOtp(newOtp);
-        // } while (isExists);
-        return otpGen();
+        let newOtp: number;
+        let isExists: boolean;
+        do {
+          newOtp = otpGen();
+          isExists = await otpServiceX.checkOtp(newOtp);
+        } while (isExists);
+        return newOtp;
       }
 
       // Create and Save OTP
