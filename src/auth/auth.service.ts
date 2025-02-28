@@ -182,9 +182,9 @@ export class AuthService {
           const savedOtp = await deliverOtp(checkedUser);
           const emailResponse = await sendEmail(savedOtp, checkedUser);
           resolve({
-            error: false,
+            error: true,
             value: { email: checkedUser.email, redirectTo: 'VerificationPage' },
-            message: 'Success',
+            message: 'Not Verified',
           });
         } else {
           const passwordMatches = await passwordVerify(
