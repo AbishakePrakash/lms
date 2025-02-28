@@ -57,11 +57,7 @@ export class OtpService {
 
   async checkOtp(newOtp: number): Promise<boolean> {
     const isExists = await this.otpRepository.findOneBy({ otp: newOtp });
-    if (!isExists) {
-      return true;
-    } else {
-      return null;
-    }
+    return !!isExists;
   }
 
   // check
