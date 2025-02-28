@@ -13,10 +13,9 @@ import { CreateAuthDto } from './dto/create-auth.dto';
 import { UpdateAuthDto } from './dto/update-auth.dto';
 import { SignInCred } from 'src/users/dto/signin-user.dto';
 import { ForgotPasswordPayload } from './dto/forgot-payload.dto';
-import { VerifyOtpPayload } from './dto/verify-otp.dto';
 import { AuthGuard } from './guard/authguard';
-import { ResetPasswordPayload } from './dto/reset-payload.dto';
 import { ApiTags } from '@nestjs/swagger';
+import { ResetPasswordPayload } from './dto/reset-pswrd.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -38,8 +37,18 @@ export class AuthController {
     return this.authService.forgotPassword(payload.email);
   }
 
+  @Post('forgotPasswordV2')
+  forgotPasswordV2(@Body() payload: ForgotPasswordPayload) {
+    return this.authService.forgotPasswordV2(payload.email);
+  }
+
   @Post('resetPassword')
-  verifyotp(@Body() payload: VerifyOtpPayload) {
-    return this.authService.verifyOtp(payload);
+  resetPassword(@Body() payload: ResetPasswordPayload) {
+    return this.authService.resetPassword(payload);
+  }
+
+  @Post('resetPasswordV2')
+  resetPasswordV2(@Body() payload: ResetPasswordPayload) {
+    return this.authService.resetPasswordV2(payload);
   }
 }

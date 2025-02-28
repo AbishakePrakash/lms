@@ -4,6 +4,8 @@ import { Repository } from 'typeorm';
 import { OtpDto } from './dto/create-otp.dto';
 import { VerifyAccountPayload } from './dto/verifyAccount.dto';
 import { Otp } from './entities/otp.entity';
+import { OtpPayload } from './dto/create-otp.payload';
+import * as moment from 'moment';
 
 @Injectable()
 export class OtpService {
@@ -13,7 +15,20 @@ export class OtpService {
   ) {}
 
   async saveOtp(createOtpDto: OtpDto) {
-    const otpRes = await this.otpRepository.save(createOtpDto);
+    const validity = process.env.OTP_VALIDITY;
+
+    const timestamp = moment().valueOf();
+    const expiry = timestamp + Number(validity) * 60 * 1000;
+    const payLoad: OtpPayload = {
+      userId: createOtpDto.userId,
+      email: createOtpDto.email,
+      otp: createOtpDto.otp,
+      service: createOtpDto.service,
+      createdAtV2: timestamp.toString(),
+      expiredAt: expiry.toString(),
+    };
+
+    const otpRes = await this.otpRepository.save(payLoad);
     return otpRes;
   }
 

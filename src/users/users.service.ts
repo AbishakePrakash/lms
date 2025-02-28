@@ -214,7 +214,7 @@ export class UsersService {
             throw 'No user found for this Id';
           }
         } catch (error) {
-          throw 'No user found for this Id';
+          throw error;
         }
       }
 
@@ -267,7 +267,7 @@ export class UsersService {
 
           resolve({
             error: false,
-            value: checkedUser.email,
+            value: { otpSentTo: checkedUser.email, redirectTo: 'LoginPage' },
             message: 'Success',
           });
         } else {
@@ -472,6 +472,14 @@ export class UsersService {
 
   async update(id: number, updateUserDto: UpdateUserDto) {
     const returnData = new ReturnData();
+    const saltRounds = process.env.SALT_ROUNDS;
+
+    if (updateUserDto.password) {
+      updateUserDto.password = await bcrypt.hash(
+        updateUserDto.password,
+        parseInt(saltRounds),
+      );
+    }
 
     try {
       const data = await this.usersRepo.update(id, updateUserDto);

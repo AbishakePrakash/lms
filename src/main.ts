@@ -5,7 +5,9 @@ import { options } from './utils/swagger.config';
 import { Logger } from '@nestjs/common';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    logger: ['error', 'warn', 'log'], // Only show these logs
+  });
   const port = parseInt(process.env.PORT) || 5000;
   app.enableCors();
 

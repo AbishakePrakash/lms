@@ -8,7 +8,7 @@ import {
   Matches,
 } from 'class-validator';
 
-export class VerifyOtpPayload {
+export class ResetPasswordPayload {
   @ApiProperty({
     description: 'User email address used for verification',
     example: 'abishekprksh@gmail.com',

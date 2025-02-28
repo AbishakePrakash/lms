@@ -80,7 +80,6 @@ export class AnswersService {
       async function checkQuestion(questionId: number) {
         try {
           const question = await questionRepositoryX.findOneBy({ questionId });
-          console.log({ question });
 
           if (question) {
             return true;
