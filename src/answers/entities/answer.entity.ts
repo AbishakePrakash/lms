@@ -18,6 +18,9 @@ export class Answer {
   userId: number;
 
   @Column()
+  email: string;
+
+  @Column()
   answer: string;
 
   @Column({ default: '', nullable: true, type: 'text' })
